@@ -45,6 +45,9 @@ async function walkEntry(entry, found) {
 export async function collectDroppedEntries(dataTransfer) {
     // webkitGetAsEntry must be called synchronously, before any await.
     const rootEntries = [...dataTransfer.items].map((item) => item.webkitGetAsEntry?.()).filter(Boolean);
+    if (rootEntries.length === 0) {
+        return entriesFromFileList(dataTransfer.files);
+    }
     const found = [];
     for (const rootEntry of rootEntries) {
         await walkEntry(rootEntry, found);

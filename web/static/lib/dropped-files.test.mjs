@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { entriesFromFileList, isMediaPath, isTorrentPath } from './dropped-files.js';
+import { collectDroppedEntries, entriesFromFileList, isMediaPath, isTorrentPath } from './dropped-files.js';
 
 describe('dropped-files', () => {
     it('reconnaitLesExtensionsSansTenirCompteDeLaCasse', () => {
@@ -16,5 +16,14 @@ describe('dropped-files', () => {
         const valeurObtenue = entriesFromFileList([fichierDansDossier, fichierSeul]);
 
         assert.deepEqual(valeurObtenue.map((entree) => entree.path), ['Saison/e01.mkv', 'seul.mkv']);
+    });
+
+    it('retombeSurLaListeDeFichiersQuandAucuneEntreeNEstDisponible', async () => {
+        const fichier = new File(['x'], 'film.mkv');
+        const transfert = { items: [{ webkitGetAsEntry: () => null }], files: [fichier] };
+
+        const valeurObtenue = await collectDroppedEntries(transfert);
+
+        assert.deepEqual(valeurObtenue.map((entree) => entree.path), ['film.mkv']);
     });
 });
