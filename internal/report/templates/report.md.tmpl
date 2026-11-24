@@ -1,0 +1,97 @@
+# Rapport de contrôle MKV
+
+Généré le {{when .CreatedAt}} — conservé jusqu'au {{when .ExpiresAt}}.
+
+## Verdict
+
+{{verdict .Findings}}
+
+*{{.Warning}}*
+
+| | |
+|---|---|
+| Mode | {{mode .Findings.Mode}} |
+| Début | {{when .Findings.StartedAt}} |
+| Durée | {{.Findings.ElapsedSeconds}} s |
+{{- with .Findings.Torrent}}
+
+## Contrôle du torrent
+
+| | |
+|---|---|
+| Nom | {{dash .Name | esc}} |
+| Info hash | `{{dash .InfoHash}}` |
+| Taille de pièce | {{size .PieceLength}} |
+| Pièces | {{num .PieceCount}} |
+| Taille totale | {{size .TotalSize}} |
+| Pièces invalides | {{num .BadPieceCount}} |
+| Pièces à zéro | {{num .ZeroPieceCount}} |
+| Pièces invérifiables | {{num .UnverifiablePieces}} |
+{{if .PieceRanges}}
+**Plages de pièces en défaut**
+
+| Type | Pièces | Octets | Fichiers |
+|---|---|---|---|
+{{range .PieceRanges}}{{range rangeRows .}}| {{.Kind}} | {{.Pieces}} | {{.Bytes}} | {{esc .File}} |
+{{end}}{{end}}{{else}}
+Aucune pièce en défaut.
+{{end}}
+| Fichier | Fichier local | Taille | Statut |
+|---|---|---|---|
+{{range .Files}}| {{esc .Path}} | {{dash .LocalPath | esc}} | {{size .Size}} | {{status .Status}} |
+{{end}}{{end}}
+{{- if .Findings.Checks}}
+
+## Contrôles de fichiers
+{{range .Findings.Checks}}
+### {{dash .FileName | esc}}
+
+| | |
+|---|---|
+| Nom | {{dash .FileName | esc}} |
+| Taille | {{size .FileSize}} ({{num .FileSize}} octets) |
+{{if .TorrentMatch}}| Correspondance torrent | {{matchSummary .TorrentMatch | esc}} |
+{{end}}
+**Pré-analyse**
+
+| | |
+|---|---|
+| Conteneur | {{with .ContainerName}}{{dash . | esc}}{{else}}—{{end}} |
+| Durée du média | {{seconds .DurationSeconds}} s |
+| Temps de lecture | {{.PrescanMilliseconds}} ms |
+| Erreur de lecture | {{with .PrescanError}}{{esc .}}{{else}}aucune{{end}} |
+{{if .Tracks}}
+| Piste | Codec | Langue | Paquets | Dernier horodatage |
+|---|---|---|---|---|
+{{range .Tracks}}| {{esc .Type}} #{{.Number}} | {{esc .Codec}} | {{esc .Language}} | {{num .PacketCount}} | {{seconds .LastTimestampSeconds}} s |
+{{end}}{{end}}
+{{if .Anomalies}}Anomalies :
+
+{{range .Anomalies}}- {{anomaly .Code | esc}} : {{esc .Detail}}
+{{end}}{{else}}Aucune anomalie de structure.
+{{end}}
+**Décodage ffmpeg**
+
+{{if .FfmpegRan}}| | |
+|---|---|
+| Code de sortie | {{.FfmpegExitCode}} |
+| Threading | {{threading .FfmpegThreading}} |
+| Version ffmpeg | {{dash (firstVersion .FfmpegVersionLines) | esc}} |
+| Lignes d'erreur | {{num .FfmpegTotalErrorLines}} ({{len .FfmpegErrors}} distinctes) |
+{{if .FfmpegErrors}}
+```
+{{range .FfmpegErrors}}{{repeat .Count}}{{code .Message}}
+{{end}}```
+{{else}}
+Aucune erreur ffmpeg.
+{{end}}{{else}}Décodage ffmpeg non exécuté.
+{{end}}{{end}}{{end}}
+
+## Outils
+
+| | |
+|---|---|
+| ffmpeg.wasm | {{dash .Findings.Versions.FfmpegWasm | esc}} |
+| @ffmpeg/core | {{dash .Findings.Versions.FfmpegCore | esc}} |
+| mediabunny | {{dash .Findings.Versions.Mediabunny | esc}} |
+| Navigateur | {{dash .Findings.UserAgent | esc}} |

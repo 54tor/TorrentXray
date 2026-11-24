@@ -1,0 +1,74 @@
+[b][size=5]Rapport de contrôle MKV[/size][/b]
+Généré le {{when .CreatedAt}} — conservé jusqu'au {{when .ExpiresAt}}.
+
+[b]Verdict[/b]
+{{verdict .Findings}}
+[i]{{.Warning}}[/i]
+
+[list]
+[*]Mode : {{mode .Findings.Mode}}
+[*]Début : {{when .Findings.StartedAt}}
+[*]Durée : {{.Findings.ElapsedSeconds}} s
+[/list]
+{{with .Findings.Torrent}}
+[b]Contrôle du torrent[/b]
+[list]
+[*]Nom : {{dash .Name | esc}}
+[*]Info hash : {{dash .InfoHash}}
+[*]Taille de pièce : {{size .PieceLength}}
+[*]Pièces : {{num .PieceCount}}
+[*]Taille totale : {{size .TotalSize}}
+[*]Pièces invalides : {{num .BadPieceCount}}
+[*]Pièces à zéro : {{num .ZeroPieceCount}}
+[*]Pièces invérifiables : {{num .UnverifiablePieces}}
+[/list]
+{{if .PieceRanges}}[b]Plages de pièces en défaut[/b]
+[list]
+{{range .PieceRanges}}{{range rangeRows .}}[*]{{if .Kind}}{{.Kind}} — pièces {{.Pieces}} — octets {{.Bytes}} — {{end}}{{esc .File}}
+{{end}}{{end}}[/list]
+{{else}}Aucune pièce en défaut.
+{{end}}
+[b]Fichiers du torrent[/b]
+[list]
+{{range .Files}}[*]{{esc .Path}} — local : {{dash .LocalPath | esc}} — {{size .Size}} — {{status .Status}}
+{{end}}[/list]
+{{end}}
+{{- range .Findings.Checks}}
+[b]Contrôle : {{dash .FileName | esc}}[/b]
+[list]
+[*]Taille : {{size .FileSize}} ({{num .FileSize}} octets)
+{{if .TorrentMatch}}[*]Correspondance torrent : {{matchSummary .TorrentMatch | esc}}
+{{end}}[*]Conteneur : {{with .ContainerName}}{{dash . | esc}}{{else}}—{{end}}
+[*]Durée du média : {{seconds .DurationSeconds}} s
+[*]Temps de lecture : {{.PrescanMilliseconds}} ms
+[*]Erreur de lecture : {{with .PrescanError}}{{esc .}}{{else}}aucune{{end}}
+{{range .Tracks}}[*]Piste {{esc .Type}} #{{.Number}} : {{esc .Codec}}, {{esc .Language}}, {{num .PacketCount}} paquets, dernier horodatage {{seconds .LastTimestampSeconds}} s
+{{end}}[/list]
+{{if .Anomalies}}[b]Anomalies[/b]
+[list]
+{{range .Anomalies}}[*]{{anomaly .Code | esc}} : {{esc .Detail}}
+{{end}}[/list]
+{{else}}Aucune anomalie de structure.
+{{end}}{{if .FfmpegRan}}[b]Décodage ffmpeg[/b]
+[list]
+[*]Code de sortie : {{.FfmpegExitCode}}
+[*]Threading : {{threading .FfmpegThreading}}
+[*]Version ffmpeg : {{dash (firstVersion .FfmpegVersionLines) | esc}}
+[*]Lignes d'erreur : {{num .FfmpegTotalErrorLines}} ({{len .FfmpegErrors}} distinctes)
+[/list]
+{{if .FfmpegErrors}}[code]
+{{range .FfmpegErrors}}{{repeat .Count | esc}}{{esc .Message}}
+{{end}}[/code]
+{{else}}Aucune erreur ffmpeg.
+{{end}}{{else}}Décodage ffmpeg non exécuté.
+{{end}}
+{{end}}
+[b]Outils[/b]
+[list]
+[*]ffmpeg.wasm : {{dash .Findings.Versions.FfmpegWasm | esc}}
+[*]@ffmpeg/core : {{dash .Findings.Versions.FfmpegCore | esc}}
+[*]mediabunny : {{dash .Findings.Versions.Mediabunny | esc}}
+[*]Navigateur : {{dash .Findings.UserAgent | esc}}
+[/list]
+
+[i]Sceau SHA-256 : {{.Seal}}[/i]

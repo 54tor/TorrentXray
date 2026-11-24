@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="color-scheme" content="dark">
+<title>Rapport de contrôle MKV</title>
+<link rel="stylesheet" href="/static/report.css">
+</head>
+<body class="report">
+<main>
+<h1>Rapport de contrôle MKV</h1>
+<p class="subtitle">Généré le {{when .CreatedAt}} — conservé jusqu'au {{when .ExpiresAt}}.</p>
+
+<div class="verdict {{if .Findings.HasProblems}}altered{{else}}identical{{end}}">
+<strong>Verdict.</strong> {{verdict .Findings}}
+</div>
+<p class="warning">{{.Warning}}</p>
+<table>
+<tr><td class="k">Mode</td><td>{{mode .Findings.Mode}}</td></tr>
+<tr><td class="k">Début</td><td>{{when .Findings.StartedAt}}</td></tr>
+<tr><td class="k">Durée</td><td>{{.Findings.ElapsedSeconds}} s</td></tr>
+</table>
+{{with .Findings.Torrent}}
+<h2>Contrôle du torrent</h2>
+<table>
+<tr><td class="k">Nom</td><td>{{dash .Name}}</td></tr>
+<tr><td class="k">Info hash</td><td><code>{{dash .InfoHash}}</code></td></tr>
+<tr><td class="k">Taille de pièce</td><td>{{size .PieceLength}}</td></tr>
+<tr><td class="k">Pièces</td><td>{{num .PieceCount}}</td></tr>
+<tr><td class="k">Taille totale</td><td>{{size .TotalSize}}</td></tr>
+<tr><td class="k">Pièces invalides</td><td>{{num .BadPieceCount}}</td></tr>
+<tr><td class="k">Pièces à zéro</td><td>{{num .ZeroPieceCount}}</td></tr>
+<tr><td class="k">Pièces invérifiables</td><td>{{num .UnverifiablePieces}}</td></tr>
+</table>
+{{if .PieceRanges}}
+<h3>Plages de pièces en défaut</h3>
+<table class="fixed">
+<tr><th>Type</th><th>Pièces</th><th>Octets</th><th>Fichiers</th></tr>
+{{range .PieceRanges}}{{range rangeRows .}}<tr><td>{{.Kind}}</td><td>{{.Pieces}}</td><td>{{.Bytes}}</td><td>{{.File}}</td></tr>
+{{end}}{{end}}</table>
+{{else}}<p class="muted">Aucune pièce en défaut.</p>{{end}}
+<table class="fixed">
+<tr><th>Fichier</th><th>Fichier local</th><th>Taille</th><th>Statut</th></tr>
+{{range .Files}}<tr><td>{{.Path}}</td><td>{{dash .LocalPath}}</td><td>{{size .Size}}</td><td>{{status .Status}}</td></tr>
+{{end}}</table>
+{{end}}
+{{if .Findings.Checks}}<h2>Contrôles de fichiers</h2>{{end}}
+{{range .Findings.Checks}}
+<h3>{{dash .FileName}}</h3>
+<table>
+<tr><td class="k">Nom</td><td>{{dash .FileName}}</td></tr>
+<tr><td class="k">Taille</td><td>{{size .FileSize}} ({{num .FileSize}} octets)</td></tr>
+{{if .TorrentMatch}}<tr><td class="k">Correspondance torrent</td><td>{{matchSummary .TorrentMatch}}</td></tr>
+{{end}}</table>
+<h4>Pré-analyse</h4>
+<table>
+<tr><td class="k">Conteneur</td><td>{{with .ContainerName}}{{dash .}}{{else}}—{{end}}</td></tr>
+<tr><td class="k">Durée du média</td><td>{{seconds .DurationSeconds}} s</td></tr>
+<tr><td class="k">Temps de lecture</td><td>{{.PrescanMilliseconds}} ms</td></tr>
+<tr><td class="k">Erreur de lecture</td><td>{{with .PrescanError}}{{.}}{{else}}aucune{{end}}</td></tr>
+</table>
+{{if .Tracks}}<table class="fixed">
+<tr><th>Piste</th><th>Codec</th><th>Langue</th><th>Paquets</th><th>Dernier horodatage</th></tr>
+{{range .Tracks}}<tr><td>{{.Type}} #{{.Number}}</td><td>{{.Codec}}</td><td>{{.Language}}</td><td>{{num .PacketCount}}</td><td>{{seconds .LastTimestampSeconds}} s</td></tr>
+{{end}}</table>
+{{end}}
+{{if .Anomalies}}<p><strong>Anomalies</strong></p>
+<ul>
+{{range .Anomalies}}<li>{{anomaly .Code}} : {{.Detail}}</li>
+{{end}}</ul>
+{{else}}<p class="muted">Aucune anomalie de structure.</p>{{end}}
+<h4>Décodage ffmpeg</h4>
+{{if .FfmpegRan}}<table>
+<tr><td class="k">Code de sortie</td><td>{{.FfmpegExitCode}}</td></tr>
+<tr><td class="k">Threading</td><td>{{threading .FfmpegThreading}}</td></tr>
+<tr><td class="k">Version ffmpeg</td><td>{{dash (firstVersion .FfmpegVersionLines)}}</td></tr>
+<tr><td class="k">Lignes d'erreur</td><td>{{num .FfmpegTotalErrorLines}} ({{len .FfmpegErrors}} distinctes)</td></tr>
+</table>
+{{if .FfmpegErrors}}<pre class="ffmpeg-log">{{range .FfmpegErrors}}{{repeat .Count}}{{.Message}}
+{{end}}</pre>
+{{else}}<p class="muted">Aucune erreur ffmpeg.</p>{{end}}
+{{else}}<p class="muted">Décodage ffmpeg non exécuté.</p>{{end}}
+{{end}}
+<h2>Outils</h2>
+<table>
+<tr><td class="k">ffmpeg.wasm</td><td>{{dash .Findings.Versions.FfmpegWasm}}</td></tr>
+<tr><td class="k">@ffmpeg/core</td><td>{{dash .Findings.Versions.FfmpegCore}}</td></tr>
+<tr><td class="k">mediabunny</td><td>{{dash .Findings.Versions.Mediabunny}}</td></tr>
+<tr><td class="k">Navigateur</td><td>{{dash .Findings.UserAgent}}</td></tr>
+</table>
+<p class="seal">Sceau SHA-256 du rapport : <code>{{.Seal}}</code></p>
+</main>
+</body>
+</html>
