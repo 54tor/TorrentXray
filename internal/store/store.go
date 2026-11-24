@@ -138,11 +138,11 @@ func (s *Store) ecrireAtomiquement(rapport report.Report) error {
 		return erreurCreation
 	}
 	if erreurEcriture := ecrireEtFermer(temporaire, contenu); erreurEcriture != nil {
-		os.Remove(temporaire.Name())
+		_ = os.Remove(temporaire.Name())
 		return erreurEcriture
 	}
 	if erreurRenommage := os.Rename(temporaire.Name(), filepath.Join(s.dir, rapport.ID+extensionRapport)); erreurRenommage != nil {
-		os.Remove(temporaire.Name())
+		_ = os.Remove(temporaire.Name())
 		return erreurRenommage
 	}
 	return nil
@@ -150,17 +150,18 @@ func (s *Store) ecrireAtomiquement(rapport report.Report) error {
 
 func ecrireEtFermer(fichier *os.File, contenu []byte) error {
 	if _, erreurEcriture := fichier.Write(contenu); erreurEcriture != nil {
-		fichier.Close()
+		_ = fichier.Close()
 		return erreurEcriture
 	}
 	if erreurPermission := fichier.Chmod(permissionFichier); erreurPermission != nil {
-		fichier.Close()
+		_ = fichier.Close()
 		return erreurPermission
 	}
 	return fichier.Close()
 }
 
 func lireRapport(chemin string) (report.Report, error) {
+	// #nosec G304 -- path built from a validated id or a Glob of the data dir
 	contenu, erreurLecture := os.ReadFile(chemin)
 	if erreurLecture != nil {
 		return report.Report{}, erreurLecture
