@@ -169,3 +169,22 @@ func TestHTML_LinksToMarkdownAndBBCodeExports(t *testing.T) {
 		}
 	}
 }
+
+func TestRender_KeepsZeroWidthNonJoinerInFileName(t *testing.T) {
+	nomPersan := "می\u200Cخواهم.mkv"
+	rapport := sampleReport(nomPersan)
+	var sortieHTML bytes.Buffer
+	if err := HTML(&sortieHTML, rapport); err != nil {
+		t.Fatal(err)
+	}
+	sorties := map[string]string{
+		"html":     sortieHTML.String(),
+		"markdown": Markdown(rapport),
+		"bbcode":   BBCode(rapport),
+	}
+	for format, valeurObtenue := range sorties {
+		if !strings.Contains(valeurObtenue, nomPersan) {
+			t.Errorf("%s : valeurAttendue contenant %q, valeurObtenue absente", format, nomPersan)
+		}
+	}
+}

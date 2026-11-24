@@ -276,3 +276,16 @@ func TestParse_ReplacesBidiAndC1ControlsInText(t *testing.T) {
 		}
 	}
 }
+
+func TestParse_KeepsZeroWidthJoinersInPersianAndEmojiText(t *testing.T) {
+	entrees := map[string]string{
+		"persan": "می\u200Cخواهم",
+		"emoji":  "👨‍👩‍👧",
+	}
+	for nom, valeurAttendue := range entrees {
+		valeurObtenue := parseOrFail(t, `{"userAgent":"`+valeurAttendue+`"}`).UserAgent
+		if valeurObtenue != valeurAttendue {
+			t.Errorf("%s : valeurAttendue %q, valeurObtenue %q", nom, valeurAttendue, valeurObtenue)
+		}
+	}
+}
