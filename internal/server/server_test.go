@@ -269,3 +269,11 @@ func TestConfigFromEnv_ReadsNumericVariablesAndRejectsGarbage(t *testing.T) {
 		t.Fatal("valeur non numérique acceptée")
 	}
 }
+
+func TestConfigFromEnv_DefaultsToBurstTenAndTwentyPerMinute(t *testing.T) {
+	t.Setenv("MKVCHECK_HMAC_KEY", cleDeTest)
+	cfg, err := ConfigFromEnv()
+	if err != nil || cfg.Burst != 10 || cfg.RatePerMinute != 20 {
+		t.Fatalf("valeurAttendue burst=10 rate=20, valeurObtenue err=%v burst=%d rate=%d", err, cfg.Burst, cfg.RatePerMinute)
+	}
+}

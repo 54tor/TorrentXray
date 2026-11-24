@@ -15,8 +15,8 @@ const (
 	defaultAddr          = ":8080"
 	defaultDataDir       = "data"
 	defaultDifficulty    = 200000
-	defaultRatePerMinute = 10
-	defaultBurst         = 5
+	defaultRatePerMinute = 20
+	defaultBurst         = 10
 	defaultMaxStoreMB    = 512
 )
 

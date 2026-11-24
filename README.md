@@ -24,8 +24,8 @@ Sans Docker : `make build` puis `bin/mkvcheck`.
 | `MKVCHECK_DATA_DIR` | `data` (`/data` dans l'image) | Dossier des rapports |
 | `MKVCHECK_HMAC_KEY` | générée au démarrage | Clé HMAC des défis anti-abus, 32 octets minimum ; à fixer pour que les défis survivent à un redémarrage |
 | `MKVCHECK_POW_DIFFICULTY` | `200000` | Difficulté de la preuve de travail Altcha |
-| `MKVCHECK_RATE_PER_MINUTE` | `10` | Requêtes par minute et par client (un enregistrement en consomme deux : défi et dépôt) |
-| `MKVCHECK_BURST` | `5` | Rafale tolérée par client (mêmes requêtes) |
+| `MKVCHECK_RATE_PER_MINUTE` | `20` | Requêtes par minute et par client (un enregistrement en consomme deux : défi et dépôt) |
+| `MKVCHECK_BURST` | `10` | Rafale tolérée par client (mêmes requêtes) |
 | `MKVCHECK_MAX_STORE_MB` | `512` | Plafond de stockage des rapports |
 | `MKVCHECK_IP_HEADER` | vide | En-tête portant l'IP du client derrière un proxy de confiance |
 
