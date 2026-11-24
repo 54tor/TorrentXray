@@ -1,0 +1,14 @@
+.git
+.gitignore
+.superpowers
+.remember
+.claude
+docs
+data
+bin
+web/static/vendor
+web/static/.fetch-work
+Dockerfile
+.dockerignore
+Makefile
+*.md
