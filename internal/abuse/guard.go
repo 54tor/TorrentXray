@@ -21,6 +21,7 @@ const (
 	sweepInterval       = time.Minute
 	secondsPerMinute    = 60
 	maxLimiters         = 100000
+	minimumHMACKeyBytes = 32
 	ipv6PrefixBits      = 64
 )
 
@@ -48,6 +49,9 @@ type Guard struct {
 }
 
 func New(cfg Config, now func() time.Time) *Guard {
+	if len(cfg.HMACKey) < minimumHMACKeyBytes {
+		panic("abuse: HMACKey must be at least " + strconv.Itoa(minimumHMACKeyBytes) + " bytes")
+	}
 	if cfg.ClientIP == nil {
 		cfg.ClientIP = ClientIPFromHeader("")
 	}
@@ -160,7 +164,7 @@ func (g *Guard) sweepIdleLimiters(currentTime time.Time) {
 func ClientIPFromHeader(header string) func(*http.Request) string {
 	return func(request *http.Request) string {
 		if header != "" {
-			if address := rightmostValidIP(request.Header.Get(header)); address != "" {
+			if address := rightmostValidIP(strings.Join(request.Header.Values(header), ",")); address != "" {
 				return address
 			}
 		}

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strconv"
+	"sync"
 	"testing"
 	"time"
 
@@ -13,7 +14,11 @@ import (
 	"golang.org/x/time/rate"
 )
 
-const testDifficulty = 50
+const (
+	testDifficulty = 50
+	cleDeTest      = "cle-de-test-0123456789-0123456789"
+	autreCleDeTest = "autre-cle-0123456789-0123456789-ab"
+)
 
 var instantInitial = time.Date(2026, 11, 24, 12, 0, 0, 0, time.UTC)
 
@@ -23,7 +28,7 @@ func (horloge *horlogeMobile) Now() time.Time { return horloge.instant }
 
 func nouveauGarde(horloge *horlogeMobile, ratePerMinute, burst int) *Guard {
 	return New(Config{
-		HMACKey:       []byte("cle-de-test"),
+		HMACKey:       []byte(cleDeTest),
 		Difficulty:    testDifficulty,
 		RatePerMinute: ratePerMinute,
 		Burst:         burst,
@@ -103,7 +108,7 @@ func TestVerifySolution_RejectsExpiredChallenge(t *testing.T) {
 }
 
 func TestVerifySolution_RejectsChallengeSignedWithOtherKey(t *testing.T) {
-	autreGarde := New(Config{HMACKey: []byte("autre-cle"), Difficulty: testDifficulty, RatePerMinute: 60, Burst: 5}, (&horlogeMobile{instantInitial}).Now)
+	autreGarde := New(Config{HMACKey: []byte(autreCleDeTest), Difficulty: testDifficulty, RatePerMinute: 60, Burst: 5}, (&horlogeMobile{instantInitial}).Now)
 	garde := nouveauGarde(&horlogeMobile{instantInitial}, 60, 5)
 	if valeurObtenue := garde.VerifySolution(resoudreDefi(t, autreGarde)); valeurObtenue {
 		t.Fatal("valeurAttendue=false, valeurObtenue=true")
@@ -210,5 +215,61 @@ func TestAllowRequest_RejectsNewIPsWhenLimiterTableIsFull(t *testing.T) {
 	}
 	if valeurObtenue := garde.AllowRequest(requeteDepuis("192.0.2.1:1")); valeurObtenue {
 		t.Fatal("valeurAttendue=false, valeurObtenue=true")
+	}
+}
+
+func TestNew_PanicsWhenHMACKeyIsTooShort(t *testing.T) {
+	for _, longueur := range []int{0, 31} {
+		func() {
+			defer func() {
+				if recover() == nil {
+					t.Fatalf("valeurAttendue=panique pour %d octets, valeurObtenue=aucune", longueur)
+				}
+			}()
+			New(Config{HMACKey: make([]byte, longueur)}, time.Now)
+		}()
+	}
+}
+
+func TestNew_AcceptsHMACKeyOf32Bytes(t *testing.T) {
+	if New(Config{HMACKey: make([]byte, 32)}, time.Now) == nil {
+		t.Fatal("valeurAttendue=garde, valeurObtenue=nil")
+	}
+}
+
+func TestClientIPFromHeader_UsesLastLineOfRepeatedHeader(t *testing.T) {
+	requete := requeteDepuis("192.0.2.9:4000")
+	requete.Header.Add("X-Forwarded-For", "198.51.100.7")
+	requete.Header.Add("X-Forwarded-For", "203.0.113.5")
+	valeurObtenue := ClientIPFromHeader("X-Forwarded-For")(requete)
+	if valeurAttendue := "203.0.113.5"; valeurObtenue != valeurAttendue {
+		t.Fatalf("valeurAttendue=%s, valeurObtenue=%s", valeurAttendue, valeurObtenue)
+	}
+}
+
+func TestVerifySolution_ConcurrentReplayAcceptedExactlyOnce(t *testing.T) {
+	const nombreDeGoroutines = 50
+	garde := nouveauGarde(&horlogeMobile{instantInitial}, 60, 5)
+	charge := resoudreDefi(t, garde)
+	var groupe sync.WaitGroup
+	var verrou sync.Mutex
+	acceptees := 0
+	depart := make(chan struct{})
+	for range nombreDeGoroutines {
+		groupe.Add(1)
+		go func() {
+			defer groupe.Done()
+			<-depart
+			if garde.VerifySolution(charge) {
+				verrou.Lock()
+				acceptees++
+				verrou.Unlock()
+			}
+		}()
+	}
+	close(depart)
+	groupe.Wait()
+	if valeurObtenue := acceptees; valeurObtenue != 1 {
+		t.Fatalf("valeurAttendue=1, valeurObtenue=%d", valeurObtenue)
 	}
 }
