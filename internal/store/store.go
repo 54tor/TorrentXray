@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sync"
 	"time"
 
 	"mkvcheck/internal/findings"
@@ -32,6 +33,7 @@ var (
 )
 
 type Store struct {
+	mutex    sync.Mutex
 	dir      string
 	maxBytes int64
 	ttl      time.Duration
@@ -46,6 +48,8 @@ func Open(dir string, maxBytes int64, ttl time.Duration, now func() time.Time) (
 }
 
 func (s *Store) Save(f findings.Findings) (report.Report, error) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
 	tailleCourante, erreurTaille := s.tailleRepertoire()
 	if erreurTaille != nil {
 		return report.Report{}, erreurTaille

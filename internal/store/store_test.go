@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -139,5 +141,40 @@ func TestSave_GeneratesDistinctTwentyTwoCharIds(t *testing.T) {
 			t.Fatalf("id dupliqué %s", sauvegarde.ID)
 		}
 		identifiantsVus[sauvegarde.ID] = true
+	}
+}
+
+func TestSave_RespectsSizeCapUnderConcurrentSaves(t *testing.T) {
+	storeMesure, _, repertoireMesure := ouvrirStoreDeTest(t, testMaxBytes)
+	sauvegardeMesure, _ := storeMesure.Save(findings.Findings{})
+	informationsMesure, erreurStat := os.Stat(filepath.Join(repertoireMesure, sauvegardeMesure.ID+".json"))
+	if erreurStat != nil {
+		t.Fatal(erreurStat)
+	}
+	tailleRapport := informationsMesure.Size()
+	const rapportsAutorises = 3
+	const nombreSauvegardesParalleles = 30
+	store, _, repertoire := ouvrirStoreDeTest(t, rapportsAutorises*tailleRapport)
+
+	var groupe sync.WaitGroup
+	var succes atomic.Int64
+	for indexSauvegarde := 0; indexSauvegarde < nombreSauvegardesParalleles; indexSauvegarde++ {
+		groupe.Add(1)
+		go func() {
+			defer groupe.Done()
+			if _, erreurSauvegarde := store.Save(findings.Findings{}); erreurSauvegarde == nil {
+				succes.Add(1)
+			}
+		}()
+	}
+	groupe.Wait()
+
+	valeurAttendue := int64(rapportsAutorises + 1)
+	if succes.Load() > valeurAttendue {
+		t.Errorf("valeurAttendue au plus %d sauvegardes, valeurObtenue %d", valeurAttendue, succes.Load())
+	}
+	tailleObtenue, _ := store.tailleRepertoire()
+	if tailleObtenue > rapportsAutorises*tailleRapport+tailleRapport {
+		t.Errorf("valeurAttendue au plus %d octets, valeurObtenue %d (%s)", rapportsAutorises*tailleRapport+tailleRapport, tailleObtenue, repertoire)
 	}
 }
