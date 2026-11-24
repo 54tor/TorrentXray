@@ -10,69 +10,72 @@ const PIECE_RANGE_BUDGETS = [50, 10, 0];
 const encoder = new TextEncoder();
 
 export function jsonByteSize(value) {
-    return encoder.encode(JSON.stringify(value)).length;
+  return encoder.encode(JSON.stringify(value)).length;
 }
 
 function applyServerCaps(findings) {
-    const torrent = findings.torrent;
-    if (!torrent) {
-        return findings;
-    }
-    const problemFiles = torrent.files.filter((file) => PROBLEM_STATUSES.includes(file.status));
-    const healthyFiles = torrent.files.filter((file) => !PROBLEM_STATUSES.includes(file.status));
-    return {
-        ...findings,
-        torrent: {
-            ...torrent,
-            files: [...problemFiles, ...healthyFiles].slice(0, MAX_TORRENT_FILES),
-            pieceRanges: torrent.pieceRanges
-                .slice(0, MAX_PIECE_RANGES)
-                .map((range) => ({ ...range, files: range.files.slice(0, MAX_FILES_PER_RANGE) })),
-        },
-    };
+  const torrent = findings.torrent;
+  if (!torrent) {
+    return findings;
+  }
+  const problemFiles = torrent.files.filter((file) => PROBLEM_STATUSES.includes(file.status));
+  const healthyFiles = torrent.files.filter((file) => !PROBLEM_STATUSES.includes(file.status));
+  return {
+    ...findings,
+    torrent: {
+      ...torrent,
+      files: [...problemFiles, ...healthyFiles].slice(0, MAX_TORRENT_FILES),
+      pieceRanges: torrent.pieceRanges
+        .slice(0, MAX_PIECE_RANGES)
+        .map((range) => ({ ...range, files: range.files.slice(0, MAX_FILES_PER_RANGE) })),
+    },
+  };
 }
 
 function withoutHealthyTorrentFiles(findings) {
-    if (!findings.torrent) {
-        return findings;
-    }
-    const files = findings.torrent.files.filter((file) => PROBLEM_STATUSES.includes(file.status));
-    return { ...findings, torrent: { ...findings.torrent, files } };
+  if (!findings.torrent) {
+    return findings;
+  }
+  const files = findings.torrent.files.filter((file) => PROBLEM_STATUSES.includes(file.status));
+  return { ...findings, torrent: { ...findings.torrent, files } };
 }
 
 function withErrorLineBudget(findings, budget) {
-    const checks = findings.checks.map((check) => ({
-        ...check,
-        ffmpeg: { ...check.ffmpeg, errors: check.ffmpeg.errors.slice(0, budget) },
-    }));
-    return { ...findings, checks };
+  const checks = findings.checks.map((check) => ({
+    ...check,
+    ffmpeg: { ...check.ffmpeg, errors: check.ffmpeg.errors.slice(0, budget) },
+  }));
+  return { ...findings, checks };
 }
 
 function withPieceRangeBudget(findings, budget) {
-    if (!findings.torrent) {
-        return findings;
-    }
-    return { ...findings, torrent: { ...findings.torrent, pieceRanges: findings.torrent.pieceRanges.slice(0, budget) } };
+  if (!findings.torrent) {
+    return findings;
+  }
+  return {
+    ...findings,
+    torrent: { ...findings.torrent, pieceRanges: findings.torrent.pieceRanges.slice(0, budget) },
+  };
 }
 
 export function fitFindingsToServerLimits(findings) {
-    if (findings.checks.length > MAX_MEDIA_FILES) {
-        return null;
-    }
-    const reductions = [
-        withoutHealthyTorrentFiles,
-        ...ERROR_LINE_BUDGETS.map((budget) => (candidate) => withErrorLineBudget(candidate, budget)),
-        ...PIECE_RANGE_BUDGETS.map((budget) => (candidate) => withPieceRangeBudget(candidate, budget)),
-    ];
-    let candidate = applyServerCaps(findings);
-    if (jsonByteSize(candidate) <= MAX_BODY_BYTES) {
-        return candidate;
-    }
-    for (const reduce of reductions) {
-        candidate = reduce(candidate);
-        if (jsonByteSize(candidate) <= MAX_BODY_BYTES) {
-            return candidate;
-        }
-    }
+  if (findings.checks.length > MAX_MEDIA_FILES) {
     return null;
+  }
+  const reductions = [
+    withoutHealthyTorrentFiles,
+    ...ERROR_LINE_BUDGETS.map((budget) => (candidate) => withErrorLineBudget(candidate, budget)),
+    ...PIECE_RANGE_BUDGETS.map((budget) => (candidate) => withPieceRangeBudget(candidate, budget)),
+  ];
+  let candidate = applyServerCaps(findings);
+  if (jsonByteSize(candidate) <= MAX_BODY_BYTES) {
+    return candidate;
+  }
+  for (const reduce of reductions) {
+    candidate = reduce(candidate);
+    if (jsonByteSize(candidate) <= MAX_BODY_BYTES) {
+      return candidate;
+    }
+  }
+  return null;
 }
