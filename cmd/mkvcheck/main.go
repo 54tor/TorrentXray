@@ -101,12 +101,13 @@ func runHealthcheck() int {
 		return 1
 	}
 	client := http.Client{Timeout: healthcheckTimeout}
+	// #nosec G704 -- loopback URL built from the configured port
 	response, err := client.Get("http://" + net.JoinHostPort("127.0.0.1", port) + "/healthz")
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
-	defer response.Body.Close()
+	defer func() { _ = response.Body.Close() }()
 	if response.StatusCode != http.StatusOK {
 		return 1
 	}
