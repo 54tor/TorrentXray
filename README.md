@@ -67,6 +67,18 @@ Les outils Go sont lancés par `go run <module>@<version>`, les outils JS (Prett
 - Seuls les constats (noms de fichiers, chemins du torrent, erreurs ffmpeg, user-agent) partent au serveur ; quiconque a le lien les lit pendant 48 h.
 - Passé ce délai, le rapport est supprimé ; aucun compte, aucun cookie, aucune ressource distante.
 
+## Crédits
+
+| Composant | Rôle | Licence |
+|---|---|---|
+| [ffmpeg.wasm](https://github.com/ffmpegwasm/ffmpeg.wasm) (`@ffmpeg/ffmpeg` 0.12.15) | Pilote ffmpeg dans un worker du navigateur | MIT |
+| `@ffmpeg/core` 0.12.10 (build WebAssembly de [FFmpeg](https://ffmpeg.org)) | Décodage et remux des MKV | GPL-2.0-or-later |
+| [mediabunny](https://mediabunny.dev) 1.65.2 | Pré-analyse du conteneur | MPL-2.0 |
+| [Altcha](https://altcha.org) 3.5.0 (widget) et [altcha-lib-go](https://github.com/altcha-org/altcha-lib-go) | Preuve de travail anti-abus | MIT |
+| [golang.org/x/time](https://pkg.go.dev/golang.org/x/time) | Limite de débit | BSD-3-Clause |
+
+La licence MIT de ce dépôt ne couvre que son propre code. `ffmpeg-core.wasm` est un composant distinct sous GPL-2.0-or-later, téléchargé au build avec une empreinte SHA-256 épinglée (`scripts/fetch-assets.sh`) ; ses sources sont celles de FFmpeg et du dépôt ffmpeg.wasm. Les fichiers des bibliothèques gardent leurs en-têtes et licences d'origine.
+
 ## Licence
 
 MIT, voir [LICENSE](LICENSE).
