@@ -1,11 +1,14 @@
 package server
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"io"
+	"log"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 	"testing/fstest"
@@ -171,6 +174,32 @@ func TestPostReports_ReturnsStorageFullWhenStoreFull(t *testing.T) {
 		t.Fatalf("premier dépôt : %d", premier.Code)
 	}
 	verifierErreur(t, env.publier(t, corpsMinimal), http.StatusServiceUnavailable, "storage_full")
+}
+
+func TestPostReports_LogsCauseAndReturns500WhenStorageIsUnavailable(t *testing.T) {
+	dossier := t.TempDir()
+	reserve, err := store.Open(dossier, 1<<20, 48*time.Hour, time.Now)
+	if err != nil {
+		t.Fatal(err)
+	}
+	garde := abuse.New(abuse.Config{
+		HMACKey: []byte(cleDeTest), Difficulty: difficulteTest, RatePerMinute: 60, Burst: 10,
+		ClientIP: abuse.ClientIPFromHeader(""),
+	}, time.Now)
+	env := environnement{handler: New(Config{}, reserve, garde, fstest.MapFS{})}
+	if err := os.RemoveAll(dossier); err != nil {
+		t.Fatal(err)
+	}
+	var journal bytes.Buffer
+	log.SetOutput(&journal)
+	t.Cleanup(func() { log.SetOutput(os.Stderr) })
+
+	reponse := env.publier(t, corpsMinimal)
+
+	verifierErreur(t, reponse, http.StatusInternalServerError, "internal_error")
+	if !strings.Contains(journal.String(), "report save failed") {
+		t.Fatalf("valeurAttendue: cause journalisée, valeurObtenue: %q", journal.String())
+	}
 }
 
 func TestGetReport_UnknownOrExpiredIdReturns404(t *testing.T) {

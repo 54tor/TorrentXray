@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -52,6 +53,7 @@ func (h handlers) createReport(writer http.ResponseWriter, request *http.Request
 		return
 	}
 	if err != nil {
+		log.Printf("report save failed: %v", err)
 		writeError(writer, http.StatusInternalServerError, "internal_error")
 		return
 	}
