@@ -12,7 +12,7 @@ docker run -d --read-only -p 8080:8080 -v mkvcheck-data:/data \
   --cap-drop ALL --security-opt no-new-privileges mkvcheck
 ```
 
-La page est servie sur `http://localhost:8080`, la sonde de santé sur `/healthz`. Le build télécharge les assets épinglés (ffmpeg.wasm, mediabunny, altcha) depuis le registre npm, avec vérification SHA-256.
+La page est servie sur `http://localhost:8080`, la sonde de santé sur `/healthz`. Le build télécharge les assets épinglés (ffmpeg.wasm, mediabunny, altcha) depuis le registre npm, avec vérification SHA-256. Les fichiers `/static/vendor/` sont mis en cache 24 h (URL non versionnées) : après une montée de version des assets, les navigateurs peuvent garder les anciens fichiers jusqu'à un jour.
 
 Sans Docker : `make build` puis `bin/mkvcheck`.
 
@@ -24,8 +24,8 @@ Sans Docker : `make build` puis `bin/mkvcheck`.
 | `MKVCHECK_DATA_DIR` | `data` (`/data` dans l'image) | Dossier des rapports |
 | `MKVCHECK_HMAC_KEY` | générée au démarrage | Clé HMAC des défis anti-abus, 32 octets minimum ; à fixer pour que les défis survivent à un redémarrage |
 | `MKVCHECK_POW_DIFFICULTY` | `200000` | Difficulté de la preuve de travail Altcha |
-| `MKVCHECK_RATE_PER_MINUTE` | `10` | Enregistrements par minute et par client |
-| `MKVCHECK_BURST` | `5` | Rafale tolérée par client |
+| `MKVCHECK_RATE_PER_MINUTE` | `10` | Requêtes par minute et par client (un enregistrement en consomme deux : défi et dépôt) |
+| `MKVCHECK_BURST` | `5` | Rafale tolérée par client (mêmes requêtes) |
 | `MKVCHECK_MAX_STORE_MB` | `512` | Plafond de stockage des rapports |
 | `MKVCHECK_IP_HEADER` | vide | En-tête portant l'IP du client derrière un proxy de confiance |
 

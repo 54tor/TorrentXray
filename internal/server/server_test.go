@@ -92,7 +92,9 @@ func TestPostReports_CreatesReportAndPermalinkServesAllThreeFormats(t *testing.T
 		t.Fatalf("valeurAttendue=201, valeurObtenue=%d (%s)", reponse.Code, reponse.Body)
 	}
 	var cree struct{ ID, URL, ExpiresAt string }
-	json.Unmarshal(reponse.Body.Bytes(), &cree)
+	if err := json.Unmarshal(reponse.Body.Bytes(), &cree); err != nil {
+		t.Fatal(err)
+	}
 	if len(cree.ID) != 22 || cree.URL != "/r/"+cree.ID || cree.ExpiresAt == "" {
 		t.Fatalf("réponse inattendue : %+v", cree)
 	}
@@ -204,7 +206,7 @@ func TestStatic_ServesWasmWithApplicationWasmContentType(t *testing.T) {
 	if reponse.Code != http.StatusOK || reponse.Header().Get("Content-Type") != "application/wasm" {
 		t.Fatalf("code=%d type=%q", reponse.Code, reponse.Header().Get("Content-Type"))
 	}
-	if reponse.Header().Get("Cache-Control") != "public, max-age=31536000, immutable" {
+	if reponse.Header().Get("Cache-Control") != "public, max-age=86400" {
 		t.Fatalf("cache vendor : %q", reponse.Header().Get("Cache-Control"))
 	}
 }
@@ -223,15 +225,18 @@ func TestStatic_ServesIndexAtRootWithShortCache(t *testing.T) {
 
 func TestHealthz_ReturnsOK(t *testing.T) {
 	env := nouvelEnvironnement(t, 1<<20, 10)
-	if code := env.servir(http.MethodGet, "/healthz", nil, nil).Code; code != http.StatusOK {
-		t.Fatalf("valeurAttendue=200, valeurObtenue=%d", code)
+	reponse := env.servir(http.MethodGet, "/healthz", nil, nil)
+	if reponse.Code != http.StatusOK || reponse.Body.String() != "ok" {
+		t.Fatalf("valeurAttendue=200/ok, valeurObtenue=%d/%q", reponse.Code, reponse.Body.String())
 	}
 }
 
 func verifierErreur(t *testing.T, reponse *httptest.ResponseRecorder, codeAttendu int, erreurAttendue string) {
 	t.Helper()
 	var corps struct{ Error string }
-	json.Unmarshal(reponse.Body.Bytes(), &corps)
+	if err := json.Unmarshal(reponse.Body.Bytes(), &corps); err != nil {
+		t.Fatal(err)
+	}
 	if reponse.Code != codeAttendu || corps.Error != erreurAttendue {
 		t.Fatalf("valeurAttendue=%d/%s, valeurObtenue=%d/%s", codeAttendu, erreurAttendue, reponse.Code, corps.Error)
 	}

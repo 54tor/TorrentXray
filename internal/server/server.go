@@ -14,7 +14,7 @@ import (
 const (
 	contentSecurityPolicy = "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'"
 	permissionsPolicy     = "camera=(), microphone=(), geolocation=()"
-	vendorCacheControl    = "public, max-age=31536000, immutable"
+	vendorCacheControl    = "public, max-age=86400"
 	staticCacheControl    = "public, max-age=300"
 	vendorPrefix          = "vendor/"
 	wasmExtension         = ".wasm"
@@ -37,7 +37,7 @@ func New(_ Config, reports *store.Store, guard *abuse.Guard, static fs.FS) http.
 	mux.HandleFunc("POST /api/reports", serving.createReport)
 	mux.HandleFunc("GET /r/{id}", serving.showReport)
 	mux.HandleFunc("GET /healthz", func(writer http.ResponseWriter, _ *http.Request) {
-		writer.WriteHeader(http.StatusOK)
+		writeText(writer, "text/plain; charset=utf-8", "ok")
 	})
 	return withSecurityHeaders(mux)
 }

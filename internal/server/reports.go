@@ -124,5 +124,6 @@ func renderReport(writer http.ResponseWriter, stored report.Report, format strin
 
 func writeText(writer http.ResponseWriter, contentType, body string) {
 	writer.Header().Set("Content-Type", contentType)
+	// #nosec G705 -- explicit text content-type with nosniff
 	_, _ = io.WriteString(writer, body)
 }
