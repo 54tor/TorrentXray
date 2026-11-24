@@ -56,3 +56,7 @@ Les outils Go sont lancés par `go run <module>@<version>` ; hadolint et gitleak
 - L'analyse des fichiers et des torrents reste dans le navigateur : rien n'est envoyé sans clic sur « Enregistrer ».
 - Seuls les constats (noms de fichiers, chemins du torrent, erreurs ffmpeg, user-agent) partent au serveur ; quiconque a le lien les lit pendant 48 h.
 - Passé ce délai, le rapport est supprimé ; aucun compte, aucun cookie, aucune ressource distante.
+
+## Licence
+
+MIT, voir [LICENSE](LICENSE).
