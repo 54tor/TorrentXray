@@ -141,3 +141,31 @@ func TestHTML_ContainsExpiryDateAndNoIndexMeta(t *testing.T) {
 		}
 	}
 }
+
+func TestAnomalyLabel_TranslatesEveryPrescanCode(t *testing.T) {
+	valeursAttendues := map[string]string{
+		"read_error":        "Erreur de lecture du conteneur",
+		"zero_size_packets": "Paquets vides",
+		"track_ends_early":  "La piste s'arrête avant la fin annoncée",
+		"empty_track":       "Piste sans aucune donnée",
+		"inconnu":           "inconnu",
+		"":                  "—",
+	}
+	for code, valeurAttendue := range valeursAttendues {
+		if valeurObtenue := anomalyLabel(code); valeurObtenue != valeurAttendue {
+			t.Errorf("%q : valeurAttendue %q, valeurObtenue %q", code, valeurAttendue, valeurObtenue)
+		}
+	}
+}
+
+func TestHTML_LinksToMarkdownAndBBCodeExports(t *testing.T) {
+	var buffer bytes.Buffer
+	if err := HTML(&buffer, sampleReport("film.mkv")); err != nil {
+		t.Fatal(err)
+	}
+	for _, valeurAttendue := range []string{`href="/r/abcdefghijklmnopqrstuv.md"`, `href="/r/abcdefghijklmnopqrstuv.bb"`} {
+		if !strings.Contains(buffer.String(), valeurAttendue) {
+			t.Errorf("valeurAttendue %q absente", valeurAttendue)
+		}
+	}
+}

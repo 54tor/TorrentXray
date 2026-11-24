@@ -161,7 +161,13 @@ func matchKindLabel(kind string) string {
 }
 
 func anomalyLabel(code string) string {
-	return dashIfEmpty(code)
+	labels := map[string]string{
+		"read_error":        "Erreur de lecture du conteneur",
+		"zero_size_packets": "Paquets vides",
+		"track_ends_early":  "La piste s'arrête avant la fin annoncée",
+		"empty_track":       "Piste sans aucune donnée",
+	}
+	return dashIfEmpty(labelOrCode(labels, code))
 }
 
 func labelOrCode(labels map[string]string, code string) string {
