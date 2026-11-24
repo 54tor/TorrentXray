@@ -1,0 +1,3 @@
+#!/bin/sh
+echo "pre-push: running make quality" >&2
+exec make quality
