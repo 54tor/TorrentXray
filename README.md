@@ -6,6 +6,16 @@ Vérificateur d'intégrité de fichiers MKV et de torrents. L'analyse se fait en
 
 ## Lancer
 
+Image publiée sur GitHub Container Registry à chaque tag `vX.Y.Z` (remplacer `<proprietaire>/<depot>` par le dépôt GitHub, en minuscules) :
+
+```sh
+docker pull ghcr.io/<proprietaire>/<depot>:0.1.0
+docker run -d --read-only -p 8080:8080 -v mkvcheck-data:/data \
+  --cap-drop ALL --security-opt no-new-privileges ghcr.io/<proprietaire>/<depot>:0.1.0
+```
+
+Ou en construisant l'image localement :
+
 ```sh
 docker build -t mkvcheck .
 docker run -d --read-only -p 8080:8080 -v mkvcheck-data:/data \
