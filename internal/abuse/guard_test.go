@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 	"time"
 
 	altcha "github.com/altcha-org/altcha-lib-go"
+	"golang.org/x/time/rate"
 )
 
 const testDifficulty = 50
@@ -190,5 +192,23 @@ func TestClientIPFromHeader_FallsBackOnMissingOrInvalidHeader(t *testing.T) {
 	requete.Header.Del("X-Forwarded-For")
 	if valeurObtenue := ClientIPFromHeader("X-Forwarded-For")(requete); valeurObtenue != "192.0.2.9" {
 		t.Fatalf("valeurObtenue=%s", valeurObtenue)
+	}
+}
+
+func TestAllowRequest_GroupsIPv6AddressesByPrefix(t *testing.T) {
+	garde := nouveauGarde(&horlogeMobile{instantInitial}, 60, 1)
+	garde.AllowRequest(requeteDepuis("[2001:db8:1:2::1]:1"))
+	if valeurObtenue := garde.AllowRequest(requeteDepuis("[2001:db8:1:2:ffff::9]:1")); valeurObtenue {
+		t.Fatal("valeurAttendue=false, valeurObtenue=true")
+	}
+}
+
+func TestAllowRequest_RejectsNewIPsWhenLimiterTableIsFull(t *testing.T) {
+	garde := nouveauGarde(&horlogeMobile{instantInitial}, 60, 1)
+	for index := 0; index < maxLimiters; index++ {
+		garde.limiters[strconv.Itoa(index)] = &ipLimiter{limiter: rate.NewLimiter(1, 1), lastSeen: instantInitial}
+	}
+	if valeurObtenue := garde.AllowRequest(requeteDepuis("192.0.2.1:1")); valeurObtenue {
+		t.Fatal("valeurAttendue=false, valeurObtenue=true")
 	}
 }

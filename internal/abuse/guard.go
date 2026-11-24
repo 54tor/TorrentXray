@@ -20,6 +20,8 @@ const (
 	limiterIdleLifetime = 10 * time.Minute
 	sweepInterval       = time.Minute
 	secondsPerMinute    = 60
+	maxLimiters         = 100000
+	ipv6PrefixBits      = 64
 )
 
 type Config struct {
@@ -97,7 +99,7 @@ func (g *Guard) decodeSignedPayload(payload string) (altcha.Payload, time.Time, 
 	if err != nil || json.Unmarshal(octets, &charge) != nil {
 		return charge, time.Time{}, false
 	}
-	valid, err := altcha.VerifySolution(charge, string(g.config.HMACKey), false)
+	valid, err := altcha.VerifySolutionSafe(charge, string(g.config.HMACKey), false)
 	if err != nil || !valid {
 		return charge, time.Time{}, false
 	}
@@ -127,12 +129,15 @@ func (g *Guard) purgeConsumed() {
 
 func (g *Guard) AllowRequest(request *http.Request) bool {
 	currentTime := g.now()
-	address := g.config.ClientIP(request)
+	address := limiterKey(g.config.ClientIP(request))
 	g.mutex.Lock()
 	defer g.mutex.Unlock()
 	g.sweepIdleLimiters(currentTime)
 	entry, exists := g.limiters[address]
 	if !exists {
+		if len(g.limiters) >= maxLimiters {
+			return false
+		}
 		entry = &ipLimiter{limiter: rate.NewLimiter(rate.Limit(float64(g.config.RatePerMinute)/secondsPerMinute), g.config.Burst)}
 		g.limiters[address] = entry
 	}
@@ -174,4 +179,12 @@ func rightmostValidIP(headerValue string) string {
 		return ""
 	}
 	return candidate
+}
+
+func limiterKey(address string) string {
+	parsed := net.ParseIP(address)
+	if parsed == nil || parsed.To4() != nil {
+		return address
+	}
+	return parsed.Mask(net.CIDRMask(ipv6PrefixBits, 128)).String()
 }
