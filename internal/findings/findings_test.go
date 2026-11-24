@@ -245,3 +245,34 @@ func TestFindingsHasProblems_TrueWhenOneCheckHasProblems(t *testing.T) {
 		t.Fatal("un contrôle avec problème suffit")
 	}
 }
+
+func TestParse_RejectsTrailingDataAfterObject(t *testing.T) {
+	for _, corps := range []string{`{} garbage`, `{}{}`, `{} []`} {
+		_, erreurObtenue := Parse([]byte(corps))
+		if !errors.Is(erreurObtenue, ErrInvalidJSON) {
+			t.Errorf("%q : valeurAttendue ErrInvalidJSON, valeurObtenue %v", corps, erreurObtenue)
+		}
+	}
+	if _, erreurObtenue := Parse([]byte("{}  \n")); erreurObtenue != nil {
+		t.Errorf("espaces finaux : valeurAttendue nil, valeurObtenue %v", erreurObtenue)
+	}
+}
+
+func TestParse_ReplacesBidiAndC1ControlsInText(t *testing.T) {
+	entrees := map[string]string{
+		"c1":        "a\u0085b",
+		"rlo":       "a\u202Eb",
+		"lri":       "a\u2066b",
+		"separator": "a\u2028b",
+		"paragraph": "a\u2029b",
+		"zwsp":      "a\u200Bb",
+		"bom":       "a\uFEFFb",
+		"lrm":       "a\u200Eb",
+	}
+	for nom, entree := range entrees {
+		valeurObtenue := parseOrFail(t, `{"userAgent":"`+entree+`"}`).UserAgent
+		if valeurObtenue != "a b" {
+			t.Errorf("%s : valeurAttendue %q, valeurObtenue %q", nom, "a b", valeurObtenue)
+		}
+	}
+}

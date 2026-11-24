@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"io"
 	"time"
 )
 
@@ -41,7 +42,11 @@ func Parse(raw []byte) (Findings, error) {
 		return Findings{}, ErrTooLarge
 	}
 	var decoded any
-	if err := json.NewDecoder(bytes.NewReader(raw)).Decode(&decoded); err != nil {
+	decoder := json.NewDecoder(bytes.NewReader(raw))
+	if err := decoder.Decode(&decoded); err != nil {
+		return Findings{}, ErrInvalidJSON
+	}
+	if _, err := decoder.Token(); !errors.Is(err, io.EOF) {
 		return Findings{}, ErrInvalidJSON
 	}
 	payload, isObject := decoded.(map[string]any)

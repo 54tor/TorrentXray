@@ -11,7 +11,7 @@ import (
 
 const maxTextRunes = 300
 
-var controlCharacters = regexp.MustCompile(`[\x00-\x1F\x7F]+`)
+var controlCharacters = regexp.MustCompile(`[\x00-\x1F\x7F-\x9F\x{200B}-\x{200F}\x{2028}-\x{202E}\x{2066}-\x{2069}\x{FEFF}]+`)
 
 func mapOf(value any) map[string]any {
 	object, _ := value.(map[string]any)
