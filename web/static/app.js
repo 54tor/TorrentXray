@@ -5,6 +5,7 @@ import {
   isTorrentPath,
 } from './lib/dropped-files.js';
 import { MAX_MEDIA_FILES } from './lib/fit-findings.js';
+import { readMediaInfoText } from './lib/media-info.js';
 import { groupErrorLines, prescanMkv } from './lib/mkv-prescan.js';
 import { describeProgress, formatBytes, formatDuration } from './lib/progress-tracker.js';
 import {
@@ -20,6 +21,8 @@ const LIBRARY_URL = '/static/vendor/ffmpeg/index.js';
 const CORE_URL = '/static/vendor/ffmpeg/ffmpeg-core.js';
 const WASM_URL = '/static/vendor/ffmpeg/ffmpeg-core.wasm';
 const MEDIABUNNY_URL = '/static/vendor/ffmpeg/mediabunny.min.js';
+const MEDIAINFO_URL = '/static/vendor/mediainfo/mediainfo.min.js';
+const MEDIAINFO_WASM_URL = '/static/vendor/mediainfo/MediaInfoModule.wasm';
 const VERSIONS_URL = '/static/vendor/ffmpeg/versions.json';
 const MOUNT_DIRECTORY = '/input';
 const STAGED_FILE_NAME = 'input.mkv';
@@ -49,6 +52,9 @@ const LABELS = {
   stepTorrent: 'Vérification SHA-1 des pièces du .torrent',
   stepPrescan: 'Analyse préliminaire du conteneur',
   stepFfmpeg: 'Analyse ffmpeg',
+  stepMediaInfo: 'Fiche technique MediaInfo',
+  copy: 'Copier',
+  copied: 'Copié',
   cancelled: 'Analyse annulée.',
   failed: "L'analyse a échoué :",
   resultOk: 'Analyse terminée : aucune erreur détectée.',
@@ -85,6 +91,8 @@ const elements = {
   statusBox: document.getElementById('status-box'),
   status: document.getElementById('status'),
   verdict: document.getElementById('verdict'),
+  mediaInfoSection: document.getElementById('mediainfo-section'),
+  mediaInfoList: document.getElementById('mediainfo-list'),
 };
 
 const state = {
@@ -94,6 +102,7 @@ const state = {
   wasCancelled: false,
   ffmpeg: null,
   versionFfmpeg: null,
+  mediaInfoReports: [],
   startedAt: null,
   stage: {
     startedAt: 0,
@@ -196,6 +205,7 @@ async function start() {
   try {
     const findings = await runAnalysis();
     showVerdict(findings);
+    renderMediaInfo();
     reportSaving.offer(findings);
   } catch (failure) {
     showFailure(failure);
@@ -208,6 +218,8 @@ async function start() {
 function prepareRun() {
   state.wasCancelled = false;
   state.steps = [];
+  state.mediaInfoReports = [];
+  elements.mediaInfoSection.hidden = true;
   state.startedAt = new Date();
   reportSaving.reset();
   renderSteps();
@@ -232,6 +244,7 @@ async function runAnalysis() {
   for (const [targetIndex, target] of targets.entries()) {
     planStep(`prescan:${targetIndex}`, `${target.path} — ${LABELS.stepPrescan}`);
     planStep(`ffmpeg:${targetIndex}`, `${target.path} — ${LABELS.stepFfmpeg}`);
+    planStep(`mediainfo:${targetIndex}`, `${target.path} — ${LABELS.stepMediaInfo}`);
   }
   const checks = [];
   for (const [targetIndex, target] of targets.entries()) {
@@ -329,6 +342,15 @@ async function analyseFile(target, stagePrefix, targetIndex) {
   beginStage(`ffmpeg:${targetIndex}`, `${stagePrefix} — ${LABELS.loading}`, file.size);
   const ffmpegResult = await runFfmpeg(file, `${stagePrefix} — ${LABELS.running}`);
   setStepState(`ffmpeg:${targetIndex}`, 'done');
+  throwIfCancelled();
+  beginStage(`mediainfo:${targetIndex}`, `${stagePrefix} — ${LABELS.stepMediaInfo}`, file.size);
+  setIndeterminateProgress();
+  const mediaInfoText = await readMediaInfoText(file, {
+    libraryUrl: absoluteUrl(MEDIAINFO_URL),
+    wasmUrl: absoluteUrl(MEDIAINFO_WASM_URL),
+  });
+  state.mediaInfoReports.push({ path: target.path, text: mediaInfoText });
+  setStepState(`mediainfo:${targetIndex}`, 'done');
   return {
     file: { name: file.name, size: file.size },
     torrentMatch: target.torrentMatch ?? null,
@@ -440,6 +462,28 @@ function showVerdict(findings) {
   elements.verdict.textContent = isProblematic ? LABELS.verdictErrors : LABELS.verdictOk;
   elements.verdict.className = `badge ${isProblematic ? 'badge-danger' : 'badge-success'}`;
   elements.verdict.hidden = false;
+}
+
+function renderMediaInfo() {
+  const sections = state.mediaInfoReports.map(({ path, text }) => {
+    const copyButton = document.createElement('button');
+    copyButton.type = 'button';
+    copyButton.className = 'button button-secondary button-small';
+    copyButton.textContent = LABELS.copy;
+    copyButton.addEventListener('click', async () => {
+      await navigator.clipboard.writeText(text);
+      copyButton.textContent = LABELS.copied;
+    });
+    const summary = document.createElement('summary');
+    summary.textContent = path;
+    const output = document.createElement('pre');
+    output.textContent = text;
+    const details = document.createElement('details');
+    details.append(summary, copyButton, output);
+    return details;
+  });
+  elements.mediaInfoList.replaceChildren(...sections);
+  elements.mediaInfoSection.hidden = sections.length === 0;
 }
 
 function showFailure(failure) {

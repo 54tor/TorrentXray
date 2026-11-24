@@ -1,6 +1,6 @@
 # mkvcheck
 
-Vérificateur d'intégrité de fichiers MKV et de torrents. L'analyse se fait entièrement dans le navigateur (ffmpeg.wasm, mediabunny) ; le serveur ne sert que la page et stocke, 48 h, les rapports que l'utilisateur choisit d'enregistrer.
+Vérificateur d'intégrité de fichiers MKV et de torrents. L'analyse se fait entièrement dans le navigateur (ffmpeg.wasm, mediabunny, mediainfo.js) ; le serveur ne sert que la page et stocke, 48 h, les rapports que l'utilisateur choisit d'enregistrer.
 
 > Les images disque (ISO, BDMV, DVD) peuvent produire de faux positifs : un constat n'est pas forcément une corruption.
 
@@ -22,7 +22,7 @@ docker run -d --read-only -p 8080:8080 -v mkvcheck-data:/data \
   --cap-drop ALL --security-opt no-new-privileges mkvcheck
 ```
 
-La page est servie sur `http://localhost:8080`, la sonde de santé sur `/healthz`. Le build télécharge les assets épinglés (ffmpeg.wasm, mediabunny, altcha) depuis le registre npm, avec vérification SHA-256. Les fichiers `/static/vendor/` sont mis en cache 24 h (URL non versionnées) : après une montée de version des assets, les navigateurs peuvent garder les anciens fichiers jusqu'à un jour.
+La page est servie sur `http://localhost:8080`, la sonde de santé sur `/healthz`. Le build télécharge les assets épinglés (ffmpeg.wasm, mediabunny, mediainfo.js, altcha) depuis le registre npm, avec vérification SHA-256. Les fichiers `/static/vendor/` sont mis en cache 24 h (URL non versionnées) : après une montée de version des assets, les navigateurs peuvent garder les anciens fichiers jusqu'à un jour.
 
 Sans Docker : `make build` puis `bin/mkvcheck`.
 
@@ -74,6 +74,7 @@ Les outils Go sont lancés par `go run <module>@<version>`, les outils JS (Prett
 | [ffmpeg.wasm](https://github.com/ffmpegwasm/ffmpeg.wasm) (`@ffmpeg/ffmpeg` 0.12.15) | Pilote ffmpeg dans un worker du navigateur | MIT |
 | `@ffmpeg/core` 0.12.10 (build WebAssembly de [FFmpeg](https://ffmpeg.org)) | Décodage et remux des MKV | GPL-2.0-or-later |
 | [mediabunny](https://mediabunny.dev) 1.65.2 | Pré-analyse du conteneur | MPL-2.0 |
+| [mediainfo.js](https://github.com/buzz/mediainfo.js) 0.3.9 (build WebAssembly de [MediaInfoLib](https://mediaarea.net/en/MediaInfo)) | Fiche technique affichée localement | BSD-2-Clause |
 | [Altcha](https://altcha.org) 3.5.0 (widget) et [altcha-lib-go](https://github.com/altcha-org/altcha-lib-go) | Preuve de travail anti-abus | MIT |
 | [golang.org/x/time](https://pkg.go.dev/golang.org/x/time) | Limite de débit | BSD-3-Clause |
 

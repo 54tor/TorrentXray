@@ -317,3 +317,13 @@ progress {
     }
 }
 
+
+#mediainfo-list details {
+  margin-block: 0.5rem;
+}
+
+#mediainfo-list pre {
+  overflow-x: auto;
+  max-height: 24rem;
+  font-size: 0.8rem;
+}
