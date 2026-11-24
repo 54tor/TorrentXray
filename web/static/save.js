@@ -1,4 +1,5 @@
 import './vendor/altcha/altcha.min.js';
+import { fitFindingsToServerLimits } from './lib/fit-findings.js';
 
 const SHA_WORKER_URL = '/static/vendor/altcha/sha.js';
 const REPORTS_URL = '/api/reports';
@@ -15,6 +16,8 @@ const ERROR_MESSAGES = {
     storage_full: 'Le stockage des rapports est plein. Réessayez plus tard.',
 };
 const LABELS = {
+    tooLarge: 'Rapport trop volumineux pour être enregistré, même réduit : analysez moins de fichiers à la fois.',
+    copyFailed: 'Copie impossible',
     solving: 'Calcul de la preuve de travail…',
     sending: 'Envoi des constats…',
     saved: 'Rapport enregistré.',
@@ -67,9 +70,14 @@ async function save(findings) {
     if (findings === null) {
         return;
     }
+    const fittedFindings = fitFindingsToServerLimits(findings);
+    if (fittedFindings === null) {
+        elements.status.textContent = LABELS.tooLarge;
+        return;
+    }
     elements.button.disabled = true;
     try {
-        const created = await postFindings(findings, await solveProofOfWork());
+        const created = await postFindings(fittedFindings, await solveProofOfWork());
         showCreated(created);
     } catch (failure) {
         elements.status.textContent = failure.message;
@@ -119,8 +127,12 @@ function setLink(anchor, url) {
 
 async function copyLink(copyButton) {
     const anchor = document.getElementById(copyButton.dataset.copyTarget);
-    await navigator.clipboard.writeText(anchor.href);
-    copyButton.textContent = LABELS.copied;
+    try {
+        await navigator.clipboard.writeText(anchor.href);
+        copyButton.textContent = LABELS.copied;
+    } catch {
+        copyButton.textContent = LABELS.copyFailed;
+    }
     setTimeout(() => {
         copyButton.textContent = LABELS.copy;
     }, COPY_FEEDBACK_MILLISECONDS);

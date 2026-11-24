@@ -1,4 +1,5 @@
 import { collectDroppedEntries, entriesFromFileList, isMediaPath, isTorrentPath } from './lib/dropped-files.js';
+import { MAX_MEDIA_FILES } from './lib/fit-findings.js';
 import { groupErrorLines, prescanMkv } from './lib/mkv-prescan.js';
 import { describeProgress, formatBytes, formatDuration } from './lib/progress-tracker.js';
 import { classifyFiles, describePieceRanges, matchLocalFiles, parseTorrentLayout, verifyPieces } from './lib/torrent-pieces.js';
@@ -27,6 +28,7 @@ const FFMPEG_ARGUMENTS_BY_MODE = {
 const LABELS = {
     selectionFiles: 'Fichiers :',
     needFiles: 'Sélectionnez au moins un fichier ou un dossier.',
+    tooManyFiles: `Au plus ${MAX_MEDIA_FILES} fichiers média par analyse : retirez des fichiers ou analysez par lots.`,
     noMedia: 'Aucun fichier MKV, MKA ou WebM dans la sélection.',
     torrentCheck: 'Vérification SHA-1 des pièces du .torrent…',
     fileStage: 'Fichier',
@@ -124,9 +126,19 @@ function renderSelection() {
     elements.selectionList.replaceChildren(
         ...state.selectedEntries.map((entry, entryIndex) => buildSelectionRow(entry.path, entry.file.size, 'file', entryIndex)),
     );
+    updateFileLimit();
     elements.torrentSlot.hidden = state.torrentEntry === null;
     const torrentRows = state.torrentEntry ? [buildSelectionRow(state.torrentEntry.file.name, state.torrentEntry.file.size, 'torrent', 0)] : [];
     elements.torrentList.replaceChildren(...torrentRows);
+}
+
+function updateFileLimit() {
+    const mediaCount = state.torrentEntry === null ? state.selectedEntries.filter((entry) => isMediaPath(entry.path)).length : 0;
+    const isOverLimit = mediaCount > MAX_MEDIA_FILES;
+    elements.startButton.disabled = isOverLimit || !isWebAssemblySupported();
+    if (isOverLimit) {
+        showFinished(LABELS.tooManyFiles, 'error');
+    }
 }
 
 function buildSelectionRow(name, size, kind, entryIndex) {
@@ -185,6 +197,9 @@ async function runAnalysis() {
     const targets = selectFilesToAnalyse(torrent);
     if (targets.length === 0 && torrent === null) {
         throw new Error(LABELS.noMedia);
+    }
+    if (targets.length > MAX_MEDIA_FILES) {
+        throw new Error(LABELS.tooManyFiles);
     }
     for (const [targetIndex, target] of targets.entries()) {
         planStep(`prescan:${targetIndex}`, `${target.path} — ${LABELS.stepPrescan}`);
@@ -365,6 +380,8 @@ function showFailure(failure) {
     failRunningStep();
     const message = state.wasCancelled ? LABELS.cancelled : `${LABELS.failed} ${failure?.message ?? failure}`;
     showFinished(message, state.wasCancelled ? null : 'error');
+    state.ffmpeg?.terminate();
+    state.versionFfmpeg?.terminate();
     state.ffmpeg = null;
     state.versionFfmpeg = null;
 }
@@ -540,14 +557,16 @@ function bindRunControls() {
     });
 }
 
+function isWebAssemblySupported() {
+    return typeof WebAssembly === 'object' && typeof Worker === 'function';
+}
+
 function init() {
     bindPickers();
     bindDropzone();
     bindRunControls();
     renderSelection();
-    const isWebAssemblySupported = typeof WebAssembly === 'object' && typeof Worker === 'function';
-    if (!isWebAssemblySupported) {
-        elements.startButton.disabled = true;
+    if (!isWebAssemblySupported()) {
         showFinished(LABELS.unsupported, 'error');
     }
 }
