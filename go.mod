@@ -1,6 +1,6 @@
 module mkvcheck
 
-go 1.26.0
+go 1.27.0
 
 require (
 	github.com/altcha-org/altcha-lib-go v1.0.0
