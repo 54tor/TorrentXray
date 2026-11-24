@@ -1,1 +1,116 @@
-<!doctype html><html lang="fr"><meta charset="utf-8"><title>mkvcheck</title><body>mkvcheck</body></html>
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Contrôle d'intégrité MKV</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="/static/report.css">
+<link rel="stylesheet" href="/static/style.css">
+<link rel="stylesheet" href="/static/vendor/altcha/altcha.css">
+<script type="module" src="/static/app.js"></script>
+</head>
+<body>
+<main>
+<header class="page-header">
+  <h1>
+    <svg class="logo" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M4 5h16v14H4zM4 9h16M4 15h16M8 5v4M12 5v4M16 5v4M8 15v4M12 15v4M16 15v4"/></svg>
+    Contrôle d'intégrité MKV
+  </h1>
+  <p class="muted">Teste des fichiers MKV sans les envoyer nulle part : l'analyse se fait entièrement dans votre navigateur.</p>
+</header>
+
+<p class="warning" role="note">Les images disque (ISO, BDMV, DVD) peuvent produire de faux positifs : un constat n'est pas forcément une corruption.</p>
+
+<section class="panel" aria-labelledby="files-title">
+  <h2 id="files-title">1. Fichiers à contrôler</h2>
+  <p class="muted">Vous pouvez aussi tout glisser-déposer d'un coup : fichiers, dossier et .torrent sont triés automatiquement.</p>
+  <div class="slots" id="dropzone">
+    <section class="slot" aria-labelledby="content-title">
+      <h3 id="content-title">Contenu à vérifier</h3>
+      <p class="muted">Un ou plusieurs fichiers MKV, ou un dossier entier.</p>
+      <div class="button-row">
+        <button type="button" class="button button-secondary" id="pick-files">Ajouter des fichiers</button>
+        <button type="button" class="button button-secondary" id="pick-folder">Ajouter un dossier</button>
+      </div>
+      <div class="selection" id="selection" aria-live="polite" hidden>
+        <div class="selection-head">
+          <strong id="selection-summary"></strong>
+          <button type="button" class="button button-secondary button-small" id="clear-selection">Vider la sélection</button>
+        </div>
+        <ul class="selection-list" id="selection-list"></ul>
+      </div>
+    </section>
+    <section class="slot" aria-labelledby="torrent-title">
+      <h3 id="torrent-title">.torrent d'origine (facultatif)</h3>
+      <p class="muted">Avec lui, le contenu est comparé pièce par pièce et seuls les fichiers corrompus sont analysés en détail. Sans lui, chaque MKV est analysé directement.</p>
+      <button type="button" class="button button-secondary" id="pick-torrent">Choisir le .torrent</button>
+      <div class="selection" id="torrent-slot" hidden>
+        <ul class="selection-list" id="torrent-list"></ul>
+      </div>
+    </section>
+    <input type="file" multiple hidden id="files-input" aria-label="Ajouter des fichiers">
+    <input type="file" webkitdirectory hidden id="folder-input" aria-label="Ajouter un dossier">
+    <input type="file" accept=".torrent,application/x-bittorrent" hidden id="torrent-input" aria-label="Choisir le .torrent">
+  </div>
+</section>
+
+<section class="panel" aria-labelledby="mode-title">
+  <h2 id="mode-title">2. Type de vérification</h2>
+  <fieldset class="modes">
+    <legend class="visually-hidden">Type de vérification</legend>
+    <label class="mode">
+      <input type="radio" name="mode" value="structure" checked>
+      <strong>Structure</strong>
+      <span class="muted">Rapide. Vérifie que le fichier est complet et bien assemblé. Repère un fichier tronqué ou cassé, mais pas une image ou un son abîmé.</span>
+    </label>
+    <label class="mode">
+      <input type="radio" name="mode" value="decode">
+      <strong>Décodage complet</strong>
+      <span class="muted">Long. Lit toute la vidéo et tout le son, comme un lecteur. Repère aussi les images et les sons abîmés.</span>
+    </label>
+  </fieldset>
+  <div class="button-row">
+    <button type="button" class="button button-primary" id="start-button">Lancer l'analyse</button>
+    <button type="button" class="button button-danger" id="cancel-button" hidden>Annuler</button>
+  </div>
+
+  <div class="progress-panel" id="progress-panel" hidden>
+    <p class="busy-status" id="busy-status" role="status" aria-live="polite"></p>
+    <progress id="progress-bar" max="1" aria-labelledby="busy-status"></progress>
+    <p class="muted" id="progress-details"></p>
+    <p class="stall-hint" id="stall-hint" hidden>Cette étape prend plus de temps que d'habitude. C'est fréquent quand un fichier est abîmé : l'analyse continue normalement et aucune action n'est nécessaire. Vous pouvez aussi annuler à tout moment (Échap).</p>
+    <ol class="steps" id="step-list"></ol>
+  </div>
+
+  <div class="status-box" id="status-box" hidden>
+    <p id="status" role="status" aria-live="polite"></p>
+    <span class="badge" id="verdict" hidden></span>
+  </div>
+</section>
+
+<section class="panel" id="save-section" aria-labelledby="save-title">
+  <h2 id="save-title">3. Enregistrer le rapport</h2>
+  <p class="privacy-notice">Seuls les constats partent au serveur : noms de fichiers, chemins du torrent, erreurs ffmpeg et user-agent du navigateur. Aucun contenu vidéo n'est envoyé. Le rapport est lisible par quiconque a le lien pendant 48 h, puis supprimé.</p>
+  <altcha-widget id="proof-widget" challenge="/api/challenge" display="invisible" workers="2" hidden></altcha-widget>
+  <div class="button-row">
+    <button type="button" class="button button-primary" id="save-button" disabled>Enregistrer le rapport</button>
+  </div>
+  <p class="muted" id="save-status" role="status" aria-live="polite"></p>
+  <div class="save-result" id="save-result" hidden>
+    <dl class="links">
+      <dt>Permalien</dt>
+      <dd><a id="permalink" href="/"></a> <button type="button" class="button button-secondary button-small" data-copy-target="permalink" aria-label="Copier le permalien">Copier</button></dd>
+      <dt>Markdown</dt>
+      <dd><a id="markdown-link" href="/"></a> <button type="button" class="button button-secondary button-small" data-copy-target="markdown-link" aria-label="Copier le lien Markdown">Copier</button></dd>
+      <dt>BBCode</dt>
+      <dd><a id="bbcode-link" href="/"></a> <button type="button" class="button button-secondary button-small" data-copy-target="bbcode-link" aria-label="Copier le lien BBCode">Copier</button></dd>
+      <dt>Expire le</dt>
+      <dd><time id="expiry"></time></dd>
+    </dl>
+  </div>
+</section>
+</main>
+</body>
+</html>

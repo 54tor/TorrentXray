@@ -1,0 +1,141 @@
+:root {
+    color-scheme: dark;
+    --background: #1e2124;
+    --surface: #272b30;
+    --surface-raised: #30353b;
+    --border: #3d434a;
+    --text: #e6e8ea;
+    --text-muted: #a9afb6;
+    --accent: #7cb7ff;
+    --success: #6fcf8f;
+    --success-surface: #1f3a2a;
+    --danger: #ff8a80;
+    --danger-surface: #432526;
+    --warning: #f2c46d;
+    --warning-surface: #3b3220;
+    --radius: 8px;
+    --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: var(--background);
+    color: var(--text);
+    font: 16px/1.5 var(--font);
+}
+
+main {
+    max-width: 60rem;
+    margin: 0 auto;
+    padding: 1.5rem 1rem 3rem;
+}
+
+h1, h2, h3, h4 {
+    line-height: 1.25;
+    margin: 1.5rem 0 0.75rem;
+}
+
+h1 {
+    font-size: 1.6rem;
+    margin-top: 0;
+}
+
+a {
+    color: var(--accent);
+    overflow-wrap: anywhere;
+}
+
+:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+code, pre {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+}
+
+.muted {
+    color: var(--text-muted);
+}
+
+.warning {
+    background: var(--warning-surface);
+    border-left: 4px solid var(--warning);
+    border-radius: var(--radius);
+    padding: 0.75rem 1rem;
+}
+
+.subtitle {
+    color: var(--text-muted);
+    margin-top: 0;
+}
+
+.verdict {
+    border-radius: var(--radius);
+    padding: 0.75rem 1rem;
+    margin: 1rem 0;
+}
+
+.verdict.identical {
+    background: var(--success-surface);
+    border-left: 4px solid var(--success);
+}
+
+.verdict.altered {
+    background: var(--danger-surface);
+    border-left: 4px solid var(--danger);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.5rem 0 1rem;
+    background: var(--surface);
+    border-radius: var(--radius);
+    overflow: hidden;
+    display: block;
+    overflow-x: auto;
+}
+
+table.fixed {
+    display: table;
+    table-layout: fixed;
+}
+
+th, td {
+    text-align: left;
+    padding: 0.45rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    overflow-wrap: anywhere;
+}
+
+th {
+    background: var(--surface-raised);
+}
+
+td.k {
+    color: var(--text-muted);
+    white-space: nowrap;
+    width: 1%;
+}
+
+.ffmpeg-log {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.75rem;
+    overflow-x: auto;
+    white-space: pre-wrap;
+}
+
+.seal {
+    color: var(--text-muted);
+    overflow-wrap: anywhere;
+}
