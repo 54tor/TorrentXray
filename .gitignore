@@ -2,3 +2,4 @@ docs/superpowers/
 .superpowers/
 data/
 web/static/vendor/
+web/static/.fetch-work/

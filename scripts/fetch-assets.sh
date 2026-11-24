@@ -27,9 +27,10 @@ if isInstalled; then
     exit 0
 fi
 
-workDirectory="$(mktemp -d)"
-[ -n "${workDirectory}" ] && [ -d "${workDirectory}" ] || { echo "mktemp failed" >&2; exit 1; }
-trap 'rm -rf -- "${workDirectory}"' EXIT
+workDirectory="web/static/.fetch-work"
+rm -rf -- web/static/.fetch-work
+mkdir -p web/static/.fetch-work
+trap 'rm -rf -- web/static/.fetch-work' EXIT
 
 fetch_package() {
     local registryPath="$1" archiveName="$2" expectedSha256="$3" extractionDirectory="$4"
