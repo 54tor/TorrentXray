@@ -47,9 +47,19 @@ Sans Docker : `make build` puis `bin/mkvcheck`.
 | `build` | Compile `bin/mkvcheck` |
 | `test` | `go test` limité à 2 paquets en parallèle |
 | `docker` | Construit l'image `mkvcheck` |
-| `quality` | gofmt, go vet, staticcheck, golangci-lint, tests `-race -cover`, govulncheck, gosec, `go mod tidy`/`verify`, hadolint, gitleaks |
+| `quality` | Porte complète : gofumpt, goimports, go vet, staticcheck, Prettier, ESLint, golangci-lint, deadcode, knip, shellcheck, shfmt, actionlint, tests `-race -cover`, fuzz, tests Node, govulncheck, gosec, `go mod tidy`/`verify`, `npm audit`, hadolint, gitleaks |
+| `quality-fast` | Formatage et lint seulement (sans tests ni audits) |
+| `fuzz` | `FuzzParse` (analyse des constats) pendant 20 s |
+| `mutation` | Tests de mutation gremlins sur `internal/findings` (manuel, hors `quality`) |
+| `hooks` | Active `.githooks/pre-push` dans `.git/hooks/` |
 
-Les outils Go sont lancés par `go run <module>@<version>` ; hadolint et gitleaks par leurs images Docker officielles, étiquetées dans le `Makefile`.
+Les outils Go sont lancés par `go run <module>@<version>`, les outils JS (Prettier, ESLint, knip) sont épinglés dans `package-lock.json` (`npm ci`), et hadolint, gitleaks, shellcheck, shfmt et actionlint tournent dans leurs images Docker étiquetées dans le `Makefile`.
+
+## Qualité
+
+- `make quality` : porte complète, exécutée aussi par la CI avant la publication de l'image.
+- `make hooks` : installe le hook `pre-push` versionné, qui lance `make quality` et annule le push en cas d'échec.
+- `make fuzz` : fuzzing de l'analyse des constats ; `make mutation` : tests de mutation, manuel.
 
 ## Confidentialité
 
