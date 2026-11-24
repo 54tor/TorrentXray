@@ -1,11 +1,11 @@
-FROM alpine:3.24 AS assets
+FROM alpine:3.24@sha256:f59abe656b692d901e184be3445e084786602108599d2a51d229c0f5a48c71bf AS assets
 # hadolint ignore=DL3018
 RUN apk add --no-cache bash curl tar coreutils
 WORKDIR /src
 COPY scripts/fetch-assets.sh scripts/fetch-assets.sh
 RUN mkdir -p web/static && bash scripts/fetch-assets.sh
 
-FROM golang:1.26.11-alpine3.24 AS builder
+FROM golang:1.26.11-alpine3.24@sha256:ecb67f987aa1a57794c91d19ade7ae0209f2f0f5496aaef9e6ae85ddf92d02ab AS builder
 WORKDIR /src
 COPY go.mod go.sum ./
 RUN go mod download
@@ -17,7 +17,7 @@ RUN test -f web/static/vendor/ffmpeg/ffmpeg-core.wasm \
  && CGO_ENABLED=0 go build -trimpath -ldflags '-s -w' -o /mkvcheck ./cmd/mkvcheck \
  && mkdir /data
 
-FROM gcr.io/distroless/static-debian12:nonroot
+FROM gcr.io/distroless/static-debian12:nonroot@sha256:afa5c872c891853ca7fcf1f12c3edb23f7eeef36189728842dd51042ff57f7ab
 COPY --from=builder /mkvcheck /mkvcheck
 COPY --from=builder --chown=65532:65532 /data /data
 USER 65532:65532
