@@ -17,14 +17,14 @@ cd "$(dirname "$0")/.."
 expectedVersions="{\"ffmpegWasm\":\"${FFMPEG_PACKAGE_VERSION}\",\"ffmpegCore\":\"${FFMPEG_CORE_VERSION}\",\"mediabunny\":\"${MEDIABUNNY_VERSION}\"}"
 
 isInstalled() {
-    [ -f web/static/vendor/ffmpeg/versions.json ] && [ "$(cat web/static/vendor/ffmpeg/versions.json)" = "${expectedVersions}" ] \
-        && [ -f web/static/vendor/ffmpeg/ffmpeg-core.wasm ] && [ -f web/static/vendor/ffmpeg/mediabunny.min.js ] \
-        && [ -f web/static/vendor/altcha/version.txt ] && [ "$(cat web/static/vendor/altcha/version.txt)" = "${ALTCHA_VERSION}" ]
+	[ -f web/static/vendor/ffmpeg/versions.json ] && [ "$(cat web/static/vendor/ffmpeg/versions.json)" = "${expectedVersions}" ] &&
+		[ -f web/static/vendor/ffmpeg/ffmpeg-core.wasm ] && [ -f web/static/vendor/ffmpeg/mediabunny.min.js ] &&
+		[ -f web/static/vendor/altcha/version.txt ] && [ "$(cat web/static/vendor/altcha/version.txt)" = "${ALTCHA_VERSION}" ]
 }
 
 if isInstalled; then
-    echo "assets already installed (ffmpeg ${FFMPEG_PACKAGE_VERSION} / core ${FFMPEG_CORE_VERSION} / mediabunny ${MEDIABUNNY_VERSION} / altcha ${ALTCHA_VERSION})"
-    exit 0
+	echo "assets already installed (ffmpeg ${FFMPEG_PACKAGE_VERSION} / core ${FFMPEG_CORE_VERSION} / mediabunny ${MEDIABUNNY_VERSION} / altcha ${ALTCHA_VERSION})"
+	exit 0
 fi
 
 workDirectory="web/static/.fetch-work"
@@ -33,12 +33,15 @@ mkdir -p web/static/.fetch-work
 trap 'rm -rf -- web/static/.fetch-work' EXIT
 
 fetch_package() {
-    local registryPath="$1" archiveName="$2" expectedSha256="$3" extractionDirectory="$4"
-    curl --fail --silent --show-error --location --output "${workDirectory}/${archiveName}" "${NPM_REGISTRY}/${registryPath}/-/${archiveName}"
-    echo "${expectedSha256}  ${workDirectory}/${archiveName}" | sha256sum --check --status \
-        || { echo "SHA-256 mismatch for ${archiveName}" >&2; exit 1; }
-    mkdir -p "${workDirectory}/${extractionDirectory}"
-    tar xzf "${workDirectory}/${archiveName}" -C "${workDirectory}/${extractionDirectory}"
+	local registryPath="$1" archiveName="$2" expectedSha256="$3" extractionDirectory="$4"
+	curl --fail --silent --show-error --location --output "${workDirectory}/${archiveName}" "${NPM_REGISTRY}/${registryPath}/-/${archiveName}"
+	echo "${expectedSha256}  ${workDirectory}/${archiveName}" | sha256sum --check --status ||
+		{
+			echo "SHA-256 mismatch for ${archiveName}" >&2
+			exit 1
+		}
+	mkdir -p "${workDirectory}/${extractionDirectory}"
+	tar xzf "${workDirectory}/${archiveName}" -C "${workDirectory}/${extractionDirectory}"
 }
 
 fetch_package "@ffmpeg/ffmpeg" "ffmpeg-${FFMPEG_PACKAGE_VERSION}.tgz" "${FFMPEG_PACKAGE_SHA256}" ffmpeg
@@ -51,8 +54,8 @@ mkdir -p web/static/vendor/ffmpeg web/static/vendor/altcha
 cp "${workDirectory}"/ffmpeg/package/dist/esm/*.js web/static/vendor/ffmpeg/
 cp "${workDirectory}/core/package/dist/esm/ffmpeg-core.js" "${workDirectory}/core/package/dist/esm/ffmpeg-core.wasm" web/static/vendor/ffmpeg/
 cp "${workDirectory}/mediabunny/package/dist/bundles/mediabunny.min.mjs" web/static/vendor/ffmpeg/mediabunny.min.js
-echo "${expectedVersions}" > web/static/vendor/ffmpeg/versions.json
+echo "${expectedVersions}" >web/static/vendor/ffmpeg/versions.json
 cp "${workDirectory}/altcha/package/dist/external/altcha.min.js" "${workDirectory}/altcha/package/dist/external/altcha.css" web/static/vendor/altcha/
 cp "${workDirectory}/altcha/package/dist/workers/sha.js" web/static/vendor/altcha/sha.js
-echo "${ALTCHA_VERSION}" > web/static/vendor/altcha/version.txt
+echo "${ALTCHA_VERSION}" >web/static/vendor/altcha/version.txt
 echo "assets installed in web/static/vendor"

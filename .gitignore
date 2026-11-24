@@ -4,3 +4,4 @@ data/
 web/static/vendor/
 web/static/.fetch-work/
 bin/
+node_modules/

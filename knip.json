@@ -1,0 +1,5 @@
+{
+  "entry": ["web/static/app.js", "web/static/save.js", "web/static/**/*.test.mjs"],
+  "project": ["web/static/**/*.{js,mjs}"],
+  "ignoreDependencies": ["prettier"]
+}
