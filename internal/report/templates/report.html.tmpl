@@ -13,7 +13,7 @@
 <h1>Rapport de contrôle .torrent</h1>
 <p class="subtitle">Généré le {{when .CreatedAt}} — conservé jusqu'au {{when .ExpiresAt}}.</p>
 
-<div class="verdict {{if .Findings.HasProblems}}altered{{else}}identical{{end}}">
+<div id="verdict" class="verdict {{if .Findings.HasProblems}}altered{{else}}identical{{end}}">
 <strong>Verdict.</strong> {{verdict .Findings}}
 </div>
 <p class="warning">{{.Warning}}</p>
@@ -24,7 +24,7 @@
 <tr><td class="k">Durée</td><td>{{.Findings.ElapsedSeconds}} s</td></tr>
 </table>
 {{with .Findings.Torrent}}
-<h2>Contrôle du torrent</h2>
+<h2 id="torrent">Contrôle du torrent <a class="anchor" href="#torrent" aria-label="Lien vers cette section">#</a></h2>
 <table>
 <tr><td class="k">Nom</td><td>{{dash .Name}}</td></tr>
 <tr><td class="k">Info hash</td><td><code>{{dash .InfoHash}}</code></td></tr>
@@ -36,26 +36,27 @@
 <tr><td class="k">Pièces invérifiables</td><td>{{num .UnverifiablePieces}}</td></tr>
 </table>
 {{if .PieceRanges}}
-<h3>Plages de pièces en défaut</h3>
+<h3 id="torrent-pieces">Plages de pièces en défaut <a class="anchor" href="#torrent-pieces" aria-label="Lien vers cette section">#</a></h3>
 <table class="fixed">
 <tr><th>Type</th><th>Pièces</th><th>Octets</th><th>Fichiers</th></tr>
 {{range .PieceRanges}}{{range rangeRows .}}<tr><td>{{.Kind}}</td><td>{{.Pieces}}</td><td>{{.Bytes}}</td><td>{{.File}}</td></tr>
 {{end}}{{end}}</table>
 {{else}}<p class="muted">Aucune pièce en défaut.</p>{{end}}
+<h3 id="torrent-files">Fichiers du torrent <a class="anchor" href="#torrent-files" aria-label="Lien vers cette section">#</a></h3>
 <table class="fixed">
 <tr><th>Fichier</th><th>Fichier local</th><th>Taille</th><th>Statut</th></tr>
 {{range .Files}}<tr><td>{{.Path}}</td><td>{{dash .LocalPath}}</td><td>{{size .Size}}</td><td>{{status .Status}}</td></tr>
 {{end}}</table>
 {{end}}
-{{if .Findings.Checks}}<h2>Contrôles de fichiers</h2>{{end}}
-{{range .Findings.Checks}}
-<h3>{{dash .FileName}}</h3>
+{{if .Findings.Checks}}<h2 id="checks">Contrôles de fichiers <a class="anchor" href="#checks" aria-label="Lien vers cette section">#</a></h2>{{end}}
+{{range $checkIndex, $check := .Findings.Checks}}
+<h3 id="file-{{$checkIndex}}">{{dash .FileName}} <a class="anchor" href="#file-{{$checkIndex}}" aria-label="Lien vers cette section">#</a></h3>
 <table>
 <tr><td class="k">Nom</td><td>{{dash .FileName}}</td></tr>
 <tr><td class="k">Taille</td><td>{{size .FileSize}} ({{num .FileSize}} octets)</td></tr>
 {{if .TorrentMatch}}<tr><td class="k">Correspondance torrent</td><td>{{matchSummary .TorrentMatch}}</td></tr>
 {{end}}</table>
-<h4>Pré-analyse</h4>
+<h4 id="file-{{$checkIndex}}-prescan">Pré-analyse <a class="anchor" href="#file-{{$checkIndex}}-prescan" aria-label="Lien vers cette section">#</a></h4>
 <table>
 <tr><td class="k">Conteneur</td><td>{{with .ContainerName}}{{dash .}}{{else}}—{{end}}</td></tr>
 <tr><td class="k">Durée du média</td><td>{{seconds .DurationSeconds}} s</td></tr>
@@ -72,7 +73,7 @@
 {{range .Anomalies}}<li>{{anomaly .Code}} : {{.Detail}}</li>
 {{end}}</ul>
 {{else}}<p class="muted">Aucune anomalie de structure.</p>{{end}}
-<h4>Décodage ffmpeg</h4>
+<h4 id="file-{{$checkIndex}}-ffmpeg">Décodage ffmpeg <a class="anchor" href="#file-{{$checkIndex}}-ffmpeg" aria-label="Lien vers cette section">#</a></h4>
 {{if .FfmpegRan}}<table>
 <tr><td class="k">Code de sortie</td><td>{{.FfmpegExitCode}}</td></tr>
 <tr><td class="k">Threading</td><td>{{threading .FfmpegThreading}}</td></tr>
@@ -83,10 +84,10 @@
 {{end}}</pre>
 {{else}}<p class="muted">Aucune erreur ffmpeg.</p>{{end}}
 {{else}}<p class="muted">Décodage ffmpeg non exécuté.</p>{{end}}
-{{if .MediaInfo}}<h4>Fiche technique (MediaInfo)</h4>
+{{if .MediaInfo}}<h4 id="file-{{$checkIndex}}-mediainfo">Fiche technique (MediaInfo) <a class="anchor" href="#file-{{$checkIndex}}-mediainfo" aria-label="Lien vers cette section">#</a></h4>
 <pre class="ffmpeg-log">{{.MediaInfo}}</pre>
 {{end}}{{end}}
-<h2>Outils</h2>
+<h2 id="tools">Outils <a class="anchor" href="#tools" aria-label="Lien vers cette section">#</a></h2>
 <table>
 <tr><td class="k">ffmpeg.wasm</td><td>{{dash .Findings.Versions.FfmpegWasm}}</td></tr>
 <tr><td class="k">@ffmpeg/core</td><td>{{dash .Findings.Versions.FfmpegCore}}</td></tr>

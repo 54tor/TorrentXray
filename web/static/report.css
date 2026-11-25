@@ -139,3 +139,13 @@ td.k {
     color: var(--text-muted);
     overflow-wrap: anywhere;
 }
+
+.anchor {
+    margin-left: 0.4em;
+    opacity: 0;
+    text-decoration: none;
+}
+
+h2:hover .anchor, h3:hover .anchor, h4:hover .anchor, .anchor:focus {
+    opacity: 1;
+}

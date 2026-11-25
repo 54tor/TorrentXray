@@ -210,3 +210,15 @@ func TestMediaInfo_RenderedInEveryFormatOnlyWhenPresent(t *testing.T) {
 		t.Fatalf("un rapport sans fiche ne doit pas changer")
 	}
 }
+
+func TestHTML_EverySectionHasAnAnchor(t *testing.T) {
+	var page bytes.Buffer
+	if err := HTML(&page, sampleReport("a.mkv")); err != nil {
+		t.Fatal(err)
+	}
+	for _, ancre := range []string{"verdict", "torrent", "torrent-pieces", "torrent-files", "checks", "file-0", "file-0-prescan", "file-0-ffmpeg", "tools"} {
+		if !strings.Contains(page.String(), `id="`+ancre+`"`) || !strings.Contains(page.String(), `href="#`+ancre+`"`) && ancre != "verdict" {
+			t.Fatalf("ancre %q absente", ancre)
+		}
+	}
+}
