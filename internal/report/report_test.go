@@ -188,3 +188,25 @@ func TestRender_KeepsZeroWidthNonJoinerInFileName(t *testing.T) {
 		}
 	}
 }
+
+func TestMediaInfo_RenderedInEveryFormatOnlyWhenPresent(t *testing.T) {
+	avecFiche := sampleReport("a.mkv")
+	avecFiche.Findings.Checks[0].MediaInfo = "General\nFormat : Matroska [x] ```"
+	sansFiche := sampleReport("a.mkv")
+
+	var page bytes.Buffer
+	if err := HTML(&page, avecFiche); err != nil {
+		t.Fatal(err)
+	}
+	for format, valeurObtenue := range map[string]string{"html": page.String(), "md": Markdown(avecFiche), "bb": BBCode(avecFiche)} {
+		if !strings.Contains(valeurObtenue, "MediaInfo") || !strings.Contains(valeurObtenue, "Format : Matroska") {
+			t.Fatalf("%s : fiche absente", format)
+		}
+	}
+	if strings.Contains(Markdown(avecFiche), "```\nGeneral\nFormat : Matroska [x] ```") {
+		t.Fatalf("les barrières de code doivent être neutralisées")
+	}
+	if strings.Contains(Markdown(sansFiche), "MediaInfo") || strings.Contains(BBCode(sansFiche), "MediaInfo") {
+		t.Fatalf("un rapport sans fiche ne doit pas changer")
+	}
+}

@@ -356,6 +356,7 @@ async function analyseFile(target, stagePrefix, targetIndex) {
     torrentMatch: target.torrentMatch ?? null,
     prescan,
     ffmpeg: ffmpegResult,
+    mediaInfo: mediaInfoText,
   };
 }
 

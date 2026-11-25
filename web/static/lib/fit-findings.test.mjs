@@ -59,3 +59,13 @@ test('retourne null quand rien ne suffit', () => {
   });
   assert.equal(fitFindingsToServerLimits({ torrent, checks: [] }), null);
 });
+
+test('rogne la fiche MediaInfo avant les erreurs ffmpeg', () => {
+  const checks = Array.from({ length: 20 }, () => ({
+    ...buildCheck(1),
+    mediaInfo: 'm'.repeat(20000),
+  }));
+  const fitted = fitFindingsToServerLimits({ torrent: null, checks });
+  assert.ok(jsonByteSize(fitted) <= MAX_BODY_BYTES);
+  assert.equal(fitted.checks[0].ffmpeg.errors.length, 1);
+});

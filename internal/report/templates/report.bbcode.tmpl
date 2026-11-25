@@ -1,4 +1,4 @@
-[b][size=5]Rapport de contrôle MKV[/size][/b]
+[b][size=5]Rapport de contrôle[/size][/b]
 Généré le {{when .CreatedAt}} — conservé jusqu'au {{when .ExpiresAt}}.
 
 [b]Verdict[/b]
@@ -61,6 +61,10 @@ Généré le {{when .CreatedAt}} — conservé jusqu'au {{when .ExpiresAt}}.
 {{end}}[/code]
 {{else}}Aucune erreur ffmpeg.
 {{end}}{{else}}Décodage ffmpeg non exécuté.
+{{end}}{{if .MediaInfo}}[b]Fiche technique (MediaInfo)[/b]
+[code]
+{{fenced .MediaInfo}}
+[/code]
 {{end}}
 {{end}}
 [b]Outils[/b]

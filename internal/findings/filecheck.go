@@ -56,6 +56,7 @@ type FileCheck struct {
 	FfmpegTotalErrorLines int           `json:"ffmpegTotalErrorLines"`
 	FfmpegErrors          []FfmpegError `json:"ffmpegErrors"`
 	FfmpegVersionLines    []string      `json:"ffmpegVersionLines"`
+	MediaInfo             string        `json:"mediaInfo"`
 }
 
 func fileCheckFromPayload(payload map[string]any) FileCheck {
@@ -78,6 +79,7 @@ func fileCheckFromPayload(payload map[string]any) FileCheck {
 		FfmpegTotalErrorLines: nonNegativeIntegerOf(ffmpeg["totalErrorLines"]),
 		FfmpegErrors:          ffmpegErrorsFromPayload(ffmpeg["errors"]),
 		FfmpegVersionLines:    textsOf(ffmpeg["versionLines"], maxVersionLines),
+		MediaInfo:             multilineTextOf(payload["mediaInfo"]),
 	}
 }
 

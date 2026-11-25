@@ -4,6 +4,8 @@ const MAX_TORRENT_FILES = 1000;
 const MAX_PIECE_RANGES = 200;
 const MAX_FILES_PER_RANGE = 20;
 const PROBLEM_STATUSES = ['suspect', 'size_mismatch', 'missing', 'unverifiable'];
+const MAX_MEDIA_INFO_CHARS = 20000;
+const MEDIA_INFO_BUDGETS = [6000, 1500, 0];
 const ERROR_LINE_BUDGETS = [100, 20, 0];
 const PIECE_RANGE_BUDGETS = [50, 10, 0];
 
@@ -30,6 +32,15 @@ function applyServerCaps(findings) {
         .map((range) => ({ ...range, files: range.files.slice(0, MAX_FILES_PER_RANGE) })),
     },
   };
+}
+
+function withMediaInfoBudget(findings, budget) {
+  const checks = findings.checks.map((check) =>
+    typeof check.mediaInfo === 'string' && check.mediaInfo.length > budget
+      ? { ...check, mediaInfo: check.mediaInfo.slice(0, budget) }
+      : check,
+  );
+  return { ...findings, checks };
 }
 
 function withoutHealthyTorrentFiles(findings) {
@@ -63,11 +74,12 @@ export function fitFindingsToServerLimits(findings) {
     return null;
   }
   const reductions = [
+    ...MEDIA_INFO_BUDGETS.map((budget) => (candidate) => withMediaInfoBudget(candidate, budget)),
     withoutHealthyTorrentFiles,
     ...ERROR_LINE_BUDGETS.map((budget) => (candidate) => withErrorLineBudget(candidate, budget)),
     ...PIECE_RANGE_BUDGETS.map((budget) => (candidate) => withPieceRangeBudget(candidate, budget)),
   ];
-  let candidate = applyServerCaps(findings);
+  let candidate = withMediaInfoBudget(applyServerCaps(findings), MAX_MEDIA_INFO_CHARS);
   if (jsonByteSize(candidate) <= MAX_BODY_BYTES) {
     return candidate;
   }

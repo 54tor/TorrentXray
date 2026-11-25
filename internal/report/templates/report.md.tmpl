@@ -1,4 +1,4 @@
-# Rapport de contrôle MKV
+# Rapport de contrôle
 
 Généré le {{when .CreatedAt}} — conservé jusqu'au {{when .ExpiresAt}}.
 
@@ -85,6 +85,12 @@ Aucune pièce en défaut.
 {{else}}
 Aucune erreur ffmpeg.
 {{end}}{{else}}Décodage ffmpeg non exécuté.
+{{end}}{{if .MediaInfo}}
+**Fiche technique (MediaInfo)**
+
+```
+{{fenced .MediaInfo}}
+```
 {{end}}{{end}}{{end}}
 
 ## Outils

@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <meta name="color-scheme" content="dark">
-<title>Rapport de contrôle MKV</title>
+<title>Rapport de contrôle</title>
 <link rel="stylesheet" href="/static/report.css">
 </head>
 <body class="report">
 <main>
-<h1>Rapport de contrôle MKV</h1>
+<h1>Rapport de contrôle</h1>
 <p class="subtitle">Généré le {{when .CreatedAt}} — conservé jusqu'au {{when .ExpiresAt}}.</p>
 
 <div class="verdict {{if .Findings.HasProblems}}altered{{else}}identical{{end}}">
@@ -83,7 +83,9 @@
 {{end}}</pre>
 {{else}}<p class="muted">Aucune erreur ffmpeg.</p>{{end}}
 {{else}}<p class="muted">Décodage ffmpeg non exécuté.</p>{{end}}
-{{end}}
+{{if .MediaInfo}}<h4>Fiche technique (MediaInfo)</h4>
+<pre class="ffmpeg-log">{{.MediaInfo}}</pre>
+{{end}}{{end}}
 <h2>Outils</h2>
 <table>
 <tr><td class="k">ffmpeg.wasm</td><td>{{dash .Findings.Versions.FfmpegWasm}}</td></tr>

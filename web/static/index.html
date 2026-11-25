@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark">
-<title>Contrôle d'intégrité MKV</title>
+<title>Contrôle d'intégrité MKV et torrents</title>
 <link rel="icon" href="data:,">
 <link rel="stylesheet" href="/static/report.css">
 <link rel="stylesheet" href="/static/style.css">
@@ -16,9 +16,9 @@
 <header class="page-header">
   <h1>
     <svg class="logo" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M4 5h16v14H4zM4 9h16M4 15h16M8 5v4M12 5v4M16 5v4M8 15v4M12 15v4M16 15v4"/></svg>
-    Contrôle d'intégrité MKV
+    Contrôle d'intégrité MKV et torrents
   </h1>
-  <p class="muted">Teste des fichiers MKV sans les envoyer nulle part : l'analyse se fait entièrement dans votre navigateur.</p>
+  <p class="muted">Teste des fichiers MKV et vérifie des torrents de tout contenu sans rien envoyer nulle part : l'analyse se fait entièrement dans votre navigateur.</p>
 </header>
 
 <p class="warning" role="note">Les images disque (ISO, BDMV, DVD) peuvent produire de faux positifs : un constat n'est pas forcément une corruption.</p>
@@ -29,7 +29,7 @@
   <div class="slots" id="dropzone">
     <section class="slot" aria-labelledby="content-title">
       <h3 id="content-title">Contenu à vérifier</h3>
-      <p class="muted">Un ou plusieurs fichiers MKV, ou un dossier entier.</p>
+      <p class="muted">Un ou plusieurs fichiers, ou un dossier entier. Avec un .torrent, tout type de fichier est vérifié ; l'analyse détaillée ne concerne que les MKV.</p>
       <div class="button-row">
         <button type="button" class="button button-secondary" id="pick-files">Ajouter des fichiers</button>
         <button type="button" class="button button-secondary" id="pick-folder">Ajouter un dossier</button>
@@ -44,7 +44,7 @@
     </section>
     <section class="slot" aria-labelledby="torrent-title">
       <h3 id="torrent-title">.torrent d'origine (facultatif)</h3>
-      <p class="muted">Avec lui, le contenu est comparé pièce par pièce et seuls les fichiers corrompus sont analysés en détail. Sans lui, chaque MKV est analysé directement.</p>
+      <p class="muted">Avec lui, le contenu est comparé pièce par pièce et seuls les fichiers corrompus sont analysés en détail. Sans lui, chaque MKV est analysé directement. Pour un contenu non MKV, il est indispensable.</p>
       <button type="button" class="button button-secondary" id="pick-torrent">Choisir le .torrent</button>
       <div class="selection" id="torrent-slot" hidden>
         <ul class="selection-list" id="torrent-list"></ul>
@@ -92,13 +92,13 @@
 
 <section class="panel" id="mediainfo-section" aria-labelledby="mediainfo-title" hidden>
   <h2 id="mediainfo-title">Fiche technique (MediaInfo)</h2>
-  <p class="muted">Calculée dans votre navigateur, non enregistrée avec le rapport.</p>
+  <p class="muted">Calculée dans votre navigateur ; enregistrée avec le rapport si vous le sauvegardez.</p>
   <div id="mediainfo-list"></div>
 </section>
 
 <section class="panel" id="save-section" aria-labelledby="save-title">
   <h2 id="save-title">3. Enregistrer le rapport</h2>
-  <p class="privacy-notice">Seuls les constats partent au serveur : noms de fichiers, chemins du torrent, erreurs ffmpeg et user-agent du navigateur. Aucun contenu vidéo n'est envoyé. Le rapport est lisible par quiconque a le lien pendant 48 h, puis supprimé.</p>
+  <p class="privacy-notice">Seuls les constats partent au serveur : noms de fichiers, chemins du torrent, erreurs ffmpeg, fiche technique MediaInfo et user-agent du navigateur. Aucun contenu vidéo n'est envoyé. Le rapport est lisible par quiconque a le lien pendant 48 h, puis supprimé.</p>
   <altcha-widget id="proof-widget" challenge="/api/challenge" display="invisible" workers="2" hidden></altcha-widget>
   <div class="button-row">
     <button type="button" class="button button-primary" id="save-button" disabled>Enregistrer le rapport</button>

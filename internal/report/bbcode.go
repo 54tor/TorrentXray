@@ -10,13 +10,20 @@ import (
 var bbcodeSource string
 
 var bbcodeTemplate = template.Must(template.New("bbcode").Funcs(sharedFuncs()).Funcs(template.FuncMap{
-	"esc": escapeBBCode,
+	"esc":    escapeBBCode,
+	"fenced": neutraliseBBCodeBlock,
 }).Parse(bbcodeSource))
 
 var bbcodeNeutraliser = strings.NewReplacer(
 	"\r\n", " ", "\r", " ", "\n", " ", " ", " ", " ", " ",
 	"[", "［", "]", "］",
 )
+
+var bbcodeBracketsOnly = strings.NewReplacer("[", "［", "]", "］")
+
+func neutraliseBBCodeBlock(value string) string {
+	return bbcodeBracketsOnly.Replace(value)
+}
 
 func escapeBBCode(value string) string {
 	return bbcodeNeutraliser.Replace(value)

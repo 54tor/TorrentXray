@@ -289,3 +289,17 @@ func TestParse_KeepsZeroWidthJoinersInPersianAndEmojiText(t *testing.T) {
 		}
 	}
 }
+
+func TestParse_KeepsLineBreaksAndCapsMediaInfo(t *testing.T) {
+	corps := `{"checks":[{"mediaInfo":"General\r\nFormat : Matroska\u0000\n` + strings.Repeat("x", 25000) + `"},{}]}`
+	valeurObtenue := parseOrFail(t, corps)
+	if !strings.HasPrefix(valeurObtenue.Checks[0].MediaInfo, "General\nFormat : Matroska\n") {
+		t.Fatalf("obtenu %q", valeurObtenue.Checks[0].MediaInfo[:40])
+	}
+	if longueur := len([]rune(valeurObtenue.Checks[0].MediaInfo)); longueur != 20000 {
+		t.Fatalf("attendu 20000 caractères, obtenu %d", longueur)
+	}
+	if valeurObtenue.Checks[1].MediaInfo != "" {
+		t.Fatalf("un ancien rapport sans fiche doit donner une chaîne vide")
+	}
+}

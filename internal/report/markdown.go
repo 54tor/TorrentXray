@@ -10,8 +10,9 @@ import (
 var markdownSource string
 
 var markdownTemplate = template.Must(template.New("markdown").Funcs(sharedFuncs()).Funcs(template.FuncMap{
-	"esc":  escapeMarkdown,
-	"code": escapeMarkdownCode,
+	"esc":    escapeMarkdown,
+	"code":   escapeMarkdownCode,
+	"fenced": neutraliseFences,
 }).Parse(markdownSource))
 
 var (
@@ -25,6 +26,10 @@ var (
 
 func escapeMarkdown(value string) string {
 	return markdownSpecials.Replace(markdownLineBreaks.Replace(value))
+}
+
+func neutraliseFences(value string) string {
+	return markdownCodeFence.Replace(value)
 }
 
 func escapeMarkdownCode(value string) string {

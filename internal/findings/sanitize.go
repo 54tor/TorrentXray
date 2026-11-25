@@ -9,7 +9,10 @@ import (
 	"time"
 )
 
-const maxTextRunes = 300
+const (
+	maxTextRunes      = 300
+	maxMediaInfoRunes = 20000
+)
 
 var controlCharacters = regexp.MustCompile(`[\x00-\x1F\x7F-\x9F\x{200B}\x{200E}\x{200F}\x{2028}-\x{202E}\x{2066}-\x{2069}\x{FEFF}]+`)
 
@@ -131,4 +134,22 @@ func nestingDepth(value any) int {
 		return 0
 	}
 	return deepestChild + 1
+}
+
+// Keeps line breaks (unlike textOf) so a MediaInfo sheet stays readable; absent in reports saved before it existed.
+func multilineTextOf(value any) string {
+	text, isText := value.(string)
+	if !isText {
+		return ""
+	}
+	text = strings.NewReplacer("\r\n", "\n", "\r", "\n").Replace(text)
+	lines := strings.Split(text, "\n")
+	for lineIndex, line := range lines {
+		lines[lineIndex] = strings.TrimRight(controlCharacters.ReplaceAllString(line, " "), " ")
+	}
+	runes := []rune(strings.TrimSpace(strings.Join(lines, "\n")))
+	if len(runes) > maxMediaInfoRunes {
+		runes = runes[:maxMediaInfoRunes]
+	}
+	return string(runes)
 }
