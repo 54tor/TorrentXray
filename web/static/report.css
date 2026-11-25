@@ -149,3 +149,10 @@ td.k {
 h2:hover .anchor, h3:hover .anchor, h4:hover .anchor, .anchor:focus {
     opacity: 1;
 }
+
+td.bad,
+p.bad,
+.ffmpeg-log.bad {
+    color: var(--danger);
+    font-weight: 600;
+}

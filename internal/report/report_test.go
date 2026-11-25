@@ -53,7 +53,7 @@ func sampleReport(fileName string) Report {
 
 func TestMarkdown_ContainsVerdictDiskImageWarningAndSeal(t *testing.T) {
 	valeurObtenue := Markdown(sampleReport("film.mkv"))
-	for _, valeurAttendue := range []string{"## Verdict", DiskImageWarning, "Sceau", "problèmes"} {
+	for _, valeurAttendue := range []string{"## Verdict", DiskImageWarning, "Sceau", "Problèmes détectés : 1 pièce invalide"} {
 		if !strings.Contains(valeurObtenue, valeurAttendue) {
 			t.Fatalf("valeurAttendue %q absente de %q", valeurAttendue, valeurObtenue)
 		}
@@ -220,5 +220,27 @@ func TestHTML_EverySectionHasAnAnchor(t *testing.T) {
 		if !strings.Contains(page.String(), `id="`+ancre+`"`) || !strings.Contains(page.String(), `href="#`+ancre+`"`) && ancre != "verdict" {
 			t.Fatalf("ancre %q absente", ancre)
 		}
+	}
+}
+
+func TestVerdictLabel_NamesEachProblem(t *testing.T) {
+	message := "boom"
+	current := findings.Findings{Checks: []findings.FileCheck{
+		{PrescanError: &message},
+		{Anomalies: []findings.Anomaly{{Code: "empty_track"}}},
+	}}
+	valeurAttendue := "Problèmes détectés : 1 fichier illisible, 1 fichier avec anomalies de structure."
+	if valeurObtenue := verdictLabel(current); valeurObtenue != valeurAttendue {
+		t.Fatalf("valeurAttendue=%q valeurObtenue=%q", valeurAttendue, valeurObtenue)
+	}
+}
+
+func TestReadStatus_FlagsFailureExplicitly(t *testing.T) {
+	message := "boom"
+	if valeurObtenue := readStatus(findings.FileCheck{PrescanError: &message}); valeurObtenue != "ÉCHEC : boom" {
+		t.Fatalf("valeurAttendue=%q valeurObtenue=%q", "ÉCHEC : boom", valeurObtenue)
+	}
+	if valeurObtenue := readStatus(findings.FileCheck{}); valeurObtenue != "Lu sans erreur" {
+		t.Fatalf("valeurAttendue=%q valeurObtenue=%q", "Lu sans erreur", valeurObtenue)
 	}
 }

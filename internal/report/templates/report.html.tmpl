@@ -61,26 +61,27 @@
 <tr><td class="k">Conteneur</td><td>{{with .ContainerName}}{{dash .}}{{else}}—{{end}}</td></tr>
 <tr><td class="k">Durée du média</td><td>{{seconds .DurationSeconds}} s</td></tr>
 <tr><td class="k">Temps de lecture</td><td>{{.PrescanMilliseconds}} ms</td></tr>
-<tr><td class="k">Erreur de lecture</td><td>{{with .PrescanError}}{{.}}{{else}}aucune{{end}}</td></tr>
+<tr><td class="k">Lecture du fichier</td><td{{if .PrescanError}} class="bad"{{end}}>{{readStatus .}}</td></tr>
 </table>
 {{if .Tracks}}<table class="fixed">
 <tr><th>Piste</th><th>Codec</th><th>Langue</th><th>Paquets</th><th>Dernier horodatage</th></tr>
 {{range .Tracks}}<tr><td>{{.Type}} #{{.Number}}</td><td>{{.Codec}}</td><td>{{.Language}}</td><td>{{num .PacketCount}}</td><td>{{seconds .LastTimestampSeconds}} s</td></tr>
 {{end}}</table>
 {{end}}
-{{if .Anomalies}}<p><strong>Anomalies</strong></p>
+{{if .Anomalies}}<p class="bad"><strong>Anomalies de structure</strong></p>
 <ul>
 {{range .Anomalies}}<li>{{anomaly .Code}} : {{.Detail}}</li>
 {{end}}</ul>
-{{else}}<p class="muted">Aucune anomalie de structure.</p>{{end}}
+{{else}}<p class="muted">Aucune anomalie de structure détectée.</p>{{end}}
 <h4 id="file-{{$checkIndex}}-ffmpeg">Décodage ffmpeg <a class="anchor" href="#file-{{$checkIndex}}-ffmpeg" aria-label="Lien vers cette section">#</a></h4>
 {{if .FfmpegRan}}<table>
+<tr><td class="k">Décodage</td><td{{if or (ne .FfmpegExitCode 0) (gt .FfmpegTotalErrorLines 0)}} class="bad"{{end}}>{{decodeStatus .}}</td></tr>
 <tr><td class="k">Code de sortie</td><td>{{.FfmpegExitCode}}</td></tr>
 <tr><td class="k">Threading</td><td>{{threading .FfmpegThreading}}</td></tr>
 <tr><td class="k">Version ffmpeg</td><td>{{dash (firstVersion .FfmpegVersionLines)}}</td></tr>
 <tr><td class="k">Lignes d'erreur</td><td>{{num .FfmpegTotalErrorLines}} ({{len .FfmpegErrors}} distinctes)</td></tr>
 </table>
-{{if .FfmpegErrors}}<pre class="ffmpeg-log">{{range .FfmpegErrors}}{{repeat .Count}}{{.Message}}
+{{if .FfmpegErrors}}<pre class="ffmpeg-log bad">{{range .FfmpegErrors}}{{repeat .Count}}{{.Message}}
 {{end}}</pre>
 {{else}}<p class="muted">Aucune erreur ffmpeg.</p>{{end}}
 {{else}}<p class="muted">Décodage ffmpeg non exécuté.</p>{{end}}

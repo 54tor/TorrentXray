@@ -59,21 +59,22 @@ Aucune pièce en défaut.
 | Conteneur | {{with .ContainerName}}{{dash . | esc}}{{else}}—{{end}} |
 | Durée du média | {{seconds .DurationSeconds}} s |
 | Temps de lecture | {{.PrescanMilliseconds}} ms |
-| Erreur de lecture | {{with .PrescanError}}{{esc .}}{{else}}aucune{{end}} |
+| Lecture du fichier | {{readStatus . | esc}} |
 {{if .Tracks}}
 | Piste | Codec | Langue | Paquets | Dernier horodatage |
 |---|---|---|---|---|
 {{range .Tracks}}| {{esc .Type}} #{{.Number}} | {{esc .Codec}} | {{esc .Language}} | {{num .PacketCount}} | {{seconds .LastTimestampSeconds}} s |
 {{end}}{{end}}
-{{if .Anomalies}}Anomalies :
+{{if .Anomalies}}**Anomalies de structure :**
 
 {{range .Anomalies}}- {{anomaly .Code | esc}} : {{esc .Detail}}
-{{end}}{{else}}Aucune anomalie de structure.
+{{end}}{{else}}Aucune anomalie de structure détectée.
 {{end}}
 **Décodage ffmpeg**
 
 {{if .FfmpegRan}}| | |
 |---|---|
+| Décodage | {{decodeStatus . | esc}} |
 | Code de sortie | {{.FfmpegExitCode}} |
 | Threading | {{threading .FfmpegThreading}} |
 | Version ffmpeg | {{dash (firstVersion .FfmpegVersionLines) | esc}} |

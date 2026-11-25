@@ -63,6 +63,8 @@ func sharedFuncs() template.FuncMap {
 		"dash":         dashIfEmpty,
 		"when":         func(moment time.Time) string { return moment.UTC().Format(timeLayout) },
 		"verdict":      verdictLabel,
+		"readStatus":   readStatus,
+		"decodeStatus": decodeStatus,
 		"mode":         modeLabel,
 		"status":       statusLabel,
 		"kind":         kindLabel,
@@ -114,12 +116,61 @@ func dashIfEmpty(value string) string {
 
 func verdictLabel(current findings.Findings) string {
 	if current.HasProblems() {
-		return "Des problèmes ont été détectés : consulter les constats ci-dessous."
+		return "Problèmes détectés : " + strings.Join(problemSummary(current), ", ") + "."
 	}
 	if current.Torrent != nil && current.Torrent.ContentMatching() {
 		return "Le contenu est conforme au torrent et aucun problème n'a été détecté."
 	}
 	return "Aucun problème détecté."
+}
+
+func problemSummary(current findings.Findings) []string {
+	var parts []string
+	if torrent := current.Torrent; torrent != nil {
+		parts = appendCount(parts, torrent.BadPieceCount, "pièce invalide", "pièces invalides")
+		parts = appendCount(parts, torrent.ZeroPieceCount, "pièce à zéro", "pièces à zéro")
+		parts = appendCount(parts, torrent.UnverifiablePieces, "pièce invérifiable", "pièces invérifiables")
+		parts = appendCount(parts, len(torrent.Files)-torrent.CountFiles("healthy"), "fichier du torrent non conforme", "fichiers du torrent non conformes")
+	}
+	var unreadable, malformed, decodeErrors int
+	for _, check := range current.Checks {
+		if check.PrescanError != nil {
+			unreadable++
+		}
+		if len(check.Anomalies) > 0 {
+			malformed++
+		}
+		if check.FfmpegRan && (check.FfmpegExitCode != 0 || check.FfmpegTotalErrorLines > 0) {
+			decodeErrors++
+		}
+	}
+	parts = appendCount(parts, unreadable, "fichier illisible", "fichiers illisibles")
+	parts = appendCount(parts, malformed, "fichier avec anomalies de structure", "fichiers avec anomalies de structure")
+	return appendCount(parts, decodeErrors, "fichier avec erreurs de décodage", "fichiers avec erreurs de décodage")
+}
+
+func appendCount(parts []string, count int, singular, plural string) []string {
+	switch {
+	case count <= 0:
+		return parts
+	case count == 1:
+		return append(parts, "1 "+singular)
+	}
+	return append(parts, formatNumber(count)+" "+plural)
+}
+
+func readStatus(check findings.FileCheck) string {
+	if check.PrescanError != nil {
+		return "ÉCHEC : " + *check.PrescanError
+	}
+	return "Lu sans erreur"
+}
+
+func decodeStatus(check findings.FileCheck) string {
+	if check.FfmpegExitCode != 0 || check.FfmpegTotalErrorLines > 0 {
+		return fmt.Sprintf("ÉCHEC : code de sortie %d, %s lignes d'erreur", check.FfmpegExitCode, formatNumber(check.FfmpegTotalErrorLines))
+	}
+	return "Décodé sans erreur"
 }
 
 func modeLabel(mode string) string {

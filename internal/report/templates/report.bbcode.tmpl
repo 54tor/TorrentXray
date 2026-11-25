@@ -41,16 +41,17 @@ Généré le {{when .CreatedAt}} — conservé jusqu'au {{when .ExpiresAt}}.
 {{end}}[*]Conteneur : {{with .ContainerName}}{{dash . | esc}}{{else}}—{{end}}
 [*]Durée du média : {{seconds .DurationSeconds}} s
 [*]Temps de lecture : {{.PrescanMilliseconds}} ms
-[*]Erreur de lecture : {{with .PrescanError}}{{esc .}}{{else}}aucune{{end}}
+[*]Lecture du fichier : {{readStatus . | esc}}
 {{range .Tracks}}[*]Piste {{esc .Type}} #{{.Number}} : {{esc .Codec}}, {{esc .Language}}, {{num .PacketCount}} paquets, dernier horodatage {{seconds .LastTimestampSeconds}} s
 {{end}}[/list]
-{{if .Anomalies}}[b]Anomalies[/b]
+{{if .Anomalies}}[b]Anomalies de structure[/b]
 [list]
 {{range .Anomalies}}[*]{{anomaly .Code | esc}} : {{esc .Detail}}
 {{end}}[/list]
-{{else}}Aucune anomalie de structure.
+{{else}}Aucune anomalie de structure détectée.
 {{end}}{{if .FfmpegRan}}[b]Décodage ffmpeg[/b]
 [list]
+[*]Décodage : {{decodeStatus . | esc}}
 [*]Code de sortie : {{.FfmpegExitCode}}
 [*]Threading : {{threading .FfmpegThreading}}
 [*]Version ffmpeg : {{dash (firstVersion .FfmpegVersionLines) | esc}}
